@@ -24,6 +24,7 @@ export class Login {
 
   protected readonly loading = signal(false);
   protected readonly error = signal<string | null>(null);
+  protected readonly credentialsError = signal(false);
 
   protected submit(): void {
     if (this.form.invalid) {
@@ -32,6 +33,7 @@ export class Login {
     }
     this.loading.set(true);
     this.error.set(null);
+    this.credentialsError.set(false);
     this.authService.login(this.form.getRawValue()).subscribe({
       next: (res) => {
         const target = res.role === 'ADMIN' ? '/admin/vacancies' : '/dashboard';
@@ -39,10 +41,16 @@ export class Login {
       },
       error: (err: HttpErrorResponse) => {
         this.loading.set(false);
-        if (err.status === 400 && (err.error as ApiError)?.fields) {
+        if (err.status === 401) {
+          this.credentialsError.set(true);
+          this.error.set('Email ou senha inválidos');
+          this.form.controls.password.reset();
+          this.form.controls.email.markAsDirty();
+          this.form.controls.password.markAsDirty();
+        } else if (err.status === 400 && (err.error as ApiError)?.fields) {
           this.error.set('Verifique os campos abaixo');
         } else {
-          this.error.set('Email ou senha inválidos');
+          this.error.set('Erro inesperado. Tente novamente.');
         }
       }
     });

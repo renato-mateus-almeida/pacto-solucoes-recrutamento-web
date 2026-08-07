@@ -15,7 +15,7 @@
         <input formControlName="email" type="email" placeholder="seu@email.com"
           class="w-full px-3.5 py-2.5 border rounded-lg text-sm text-neutral-950 placeholder:text-neutral-400
                  focus:outline-none focus:ring-2 focus:ring-[#2241c8] focus:border-transparent"
-          [class.border-red-500]="form.controls.email.touched && form.controls.email.invalid">
+          [class.border-red-500]="(form.controls.email.touched && form.controls.email.invalid) || credentialsError()">
         @if (form.controls.email.touched && form.controls.email.errors?.['required']) {
           <span class="text-red-600 text-xs mt-1 block">Email obrigatório</span>
         }
@@ -29,7 +29,7 @@
         <input formControlName="password" type="password" placeholder="Sua senha"
           class="w-full px-3.5 py-2.5 border rounded-lg text-sm text-neutral-950 placeholder:text-neutral-400
                  focus:outline-none focus:ring-2 focus:ring-[#2241c8] focus:border-transparent"
-          [class.border-red-500]="form.controls.password.touched && form.controls.password.invalid">
+          [class.border-red-500]="(form.controls.password.touched && form.controls.password.invalid) || credentialsError()">
         @if (form.controls.password.touched && form.controls.password.errors?.['required']) {
           <span class="text-red-600 text-xs mt-1 block">Senha obrigatória</span>
         }

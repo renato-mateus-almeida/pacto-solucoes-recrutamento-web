@@ -1,0 +1,110 @@
+<div class="bg-white px-6 py-7">
+  <a [routerLink]="['/admin/vacancies']" class="text-neutral-500 text-sm no-underline inline-flex items-center gap-1 mb-5 hover:text-neutral-700">
+    <ng-icon name="heroArrowLeft" size="14px" />
+    Voltar para Gerenciar Vagas
+  </a>
+
+  @if (vacancyError()) {
+    <div class="text-center py-16">
+      <div class="text-4xl mb-4">
+        <ng-icon name="heroInbox" size="48px" class="text-neutral-300" />
+      </div>
+      <p class="text-neutral-500">{{ vacancyError() }}</p>
+    </div>
+  } @else {
+    @if (loadingVacancy()) {
+      <div class="animate-pulse mb-6">
+        <div class="h-6 bg-neutral-200 rounded w-1/3 mb-2"></div>
+        <div class="h-4 bg-neutral-100 rounded w-2/3"></div>
+      </div>
+    } @else if (vacancy(); as v) {
+      <div class="mb-6">
+        <h2 class="text-neutral-950 text-xl font-bold mb-1">{{ v.title }}</h2>
+        <div class="flex items-center gap-3 text-xs text-neutral-400">
+          <span class="flex items-center gap-1"><ng-icon name="heroCalendarDays" size="14px" />{{ v.createdAt | date:'dd/MM/yyyy' }}</span>
+          <app-status-badge [status]="v.status" />
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2.5 mb-6">
+        @for (item of [
+          { key: 'ALL', label: 'Todos', color: 'text-indigo-700', count: counts().all },
+          { key: 'PENDING', label: 'Pendentes', color: 'text-amber-800', count: counts().pending },
+          { key: 'IN_REVIEW', label: 'Em Revisão', color: 'text-blue-800', count: counts().inReview },
+          { key: 'APPROVED', label: 'Aprovados', color: 'text-green-800', count: counts().approved },
+          { key: 'REJECTED', label: 'Reprovados', color: 'text-red-700', count: counts().rejected }
+        ]; track item.key) {
+          <div (click)="setFilter($any(item.key))" role="button" tabindex="0" (keydown.enter)="setFilter($any(item.key))"
+            class="text-center border-2 rounded-xl py-3 px-2 cursor-pointer transition"
+            [class.border-[#2241c8]]="activeFilter() === item.key && item.key === 'ALL'"
+            [class.bg-indigo-50]="activeFilter() === item.key && item.key === 'ALL'"
+            [class.border-amber-600]="activeFilter() === item.key && item.key === 'PENDING'"
+            [class.bg-amber-50]="activeFilter() === item.key && item.key === 'PENDING'"
+            [class.border-blue-600]="activeFilter() === item.key && item.key === 'IN_REVIEW'"
+            [class.bg-blue-50]="activeFilter() === item.key && item.key === 'IN_REVIEW'"
+            [class.border-green-600]="activeFilter() === item.key && item.key === 'APPROVED'"
+            [class.bg-green-50]="activeFilter() === item.key && item.key === 'APPROVED'"
+            [class.border-red-600]="activeFilter() === item.key && item.key === 'REJECTED'"
+            [class.bg-red-50]="activeFilter() === item.key && item.key === 'REJECTED'"
+            [class.border-neutral-200]="activeFilter() !== item.key">
+            <div class="text-[11px] uppercase font-semibold tracking-wide mb-1" [class]="item.color">{{ item.label }}</div>
+            <div class="text-2xl font-bold text-neutral-950">{{ item.count }}</div>
+          </div>
+        }
+      </div>
+
+      <div class="text-neutral-500 text-sm mb-4">
+        Exibindo: <strong class="text-neutral-950">
+          {{ activeFilter() === 'ALL' ? 'Todos' : activeFilter() }} ({{ filtered().length }})
+        </strong>
+      </div>
+
+      @if (loading()) {
+        <div class="space-y-3">
+          @for (i of [1,2,3]; track i) {
+            <div class="border border-neutral-200 rounded-xl p-4 animate-pulse h-16"></div>
+          }
+        </div>
+      } @else if (error()) {
+        <div class="text-center py-12">
+          <p class="text-neutral-500 mb-4">{{ error() }}</p>
+          <button (click)="loadApplications()" class="bg-[#2241c8] text-white font-semibold px-6 py-2.5 rounded-lg text-sm">Tentar novamente</button>
+        </div>
+      } @else if (filtered().length === 0) {
+        <div class="text-center py-16">
+          <div class="text-4xl mb-4">
+            <ng-icon name="heroInbox" size="48px" class="text-neutral-300" />
+          </div>
+          <h4 class="text-neutral-950 font-bold mb-2">Nenhuma candidatura {{ activeFilter() !== 'ALL' ? activeFilter() : '' }}</h4>
+          <p class="text-neutral-500 text-sm">Nenhum candidato se inscreveu nesta vaga ainda.</p>
+        </div>
+      } @else {
+        <div class="border border-neutral-200 rounded-xl overflow-hidden">
+          @for (app of filtered(); track app.id) {
+            <a [routerLink]="['/admin/vacancies', vacancyId, 'applications', app.id]"
+              class="flex items-center justify-between px-5 py-4 border-b border-neutral-100 last:border-b-0 no-underline text-inherit hover:bg-neutral-50 transition cursor-pointer">
+              <div class="min-w-0">
+                <strong class="text-neutral-950 text-sm">{{ app.candidate.name }}</strong>
+                <div class="text-neutral-500 text-xs mt-0.5">Candidatura #{{ app.id }} · {{ app.appliedAt | date:'dd/MM/yyyy' }}</div>
+              </div>
+              <div class="flex items-center gap-3 shrink-0 ml-4">
+                <app-status-badge [status]="app.status" />
+                @if (app.status === 'PENDING') {
+                  <button (click)="startReview(app); $event.stopPropagation(); $event.preventDefault()"
+                    [disabled]="movingToReview().has(app.id)"
+                    class="bg-blue-700 text-white border-none rounded-md px-4 py-1.5 text-xs font-semibold cursor-pointer hover:bg-blue-800 disabled:opacity-50">
+                    @if (movingToReview().has(app.id)) { Movendo... } @else { Revisar }
+                  </button>
+                } @else if (app.status === 'IN_REVIEW') {
+                  <ng-icon name="heroChevronRightSolid" size="16px" class="text-neutral-300" />
+                } @else {
+                  <span class="text-neutral-400 text-xs">Finalizado</span>
+                }
+              </div>
+            </a>
+          }
+        </div>
+      }
+    }
+  }
+</div>

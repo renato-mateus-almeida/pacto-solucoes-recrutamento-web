@@ -1,4 +1,4 @@
-import { Component, input, output, ChangeDetectionStrategy } from '@angular/core';
+import { Component, input, output, ChangeDetectionStrategy, ElementRef, viewChild, effect, inject } from '@angular/core';
 
 @Component({
   selector: 'app-confirm-modal',
@@ -18,4 +18,20 @@ export class ConfirmModal {
 
   readonly confirm = output();
   readonly cancel = output();
+
+  private readonly confirmBtn = viewChild<ElementRef<HTMLButtonElement>>('confirmBtn');
+
+  constructor() {
+    effect(() => {
+      if (this.open()) {
+        setTimeout(() => this.confirmBtn()?.nativeElement.focus(), 0);
+      }
+    });
+  }
+
+  protected onKeydown(event: KeyboardEvent): void {
+    if (event.key === 'Escape') {
+      this.cancel.emit();
+    }
+  }
 }

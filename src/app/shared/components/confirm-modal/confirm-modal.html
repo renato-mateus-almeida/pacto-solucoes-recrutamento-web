@@ -1,14 +1,15 @@
 @if (open()) {
-  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40" (click)="cancel.emit()">
-    <div class="bg-white rounded-xl shadow-lg max-w-md w-full mx-4 p-6" (click)="$event.stopPropagation()">
-      <h3 class="text-neutral-950 text-lg font-bold mb-2">{{ title() }}</h3>
-      <p class="text-neutral-500 text-sm mb-6 leading-relaxed">{{ message() }}</p>
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40" (click)="!loading() && cancel.emit()" (keydown)="onKeydown($event)">
+    <div class="bg-white rounded-xl shadow-lg max-w-md w-full mx-4 p-6" (click)="$event.stopPropagation()"
+      role="dialog" aria-modal="true" aria-labelledby="confirm-modal-title" aria-describedby="confirm-modal-message">
+      <h3 id="confirm-modal-title" class="text-neutral-950 text-lg font-bold mb-2">{{ title() }}</h3>
+      <p id="confirm-modal-message" class="text-neutral-500 text-sm mb-6 leading-relaxed">{{ message() }}</p>
       <div class="flex gap-3 justify-end">
         <button (click)="cancel.emit()" [disabled]="loading()"
           class="bg-white text-neutral-700 border border-neutral-300 rounded-lg px-5 py-2.5 text-sm font-medium cursor-pointer hover:bg-neutral-50 disabled:opacity-50">
           {{ cancelLabel() }}
         </button>
-        <button (click)="confirm.emit()" [disabled]="loading()"
+        <button (click)="confirm.emit()" [disabled]="loading()" #confirmBtn
           [class.bg-red-600]="variant() === 'danger'"
           [class.hover:bg-red-700]="variant() === 'danger'"
           [class.bg-[#2241c8]]="variant() === 'primary'"

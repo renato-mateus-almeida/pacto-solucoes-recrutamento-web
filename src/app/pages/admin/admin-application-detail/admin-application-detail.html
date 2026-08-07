@@ -1,0 +1,124 @@
+<div class="bg-white px-6 py-7">
+  <a [routerLink]="['/admin/vacancies', vacancyId, 'applications']" class="text-neutral-500 text-sm no-underline inline-flex items-center gap-1 mb-5 hover:text-neutral-700">
+    <ng-icon name="heroArrowLeft" size="14px" />
+    Voltar para Candidaturas
+  </a>
+
+  @if (loading()) {
+    <div class="animate-pulse max-w-lg">
+      <div class="h-6 bg-neutral-200 rounded w-2/3 mb-3"></div>
+      <div class="h-4 bg-neutral-100 rounded w-full mb-2"></div>
+      <div class="h-4 bg-neutral-100 rounded w-3/4"></div>
+    </div>
+  } @else if (error()) {
+    <div class="text-center py-16">
+      <p class="text-neutral-500 mb-4">{{ error() }}</p>
+      <button (click)="loadData()" class="bg-[#2241c8] text-white font-semibold px-6 py-2.5 rounded-lg text-sm">Tentar novamente</button>
+    </div>
+  } @else if (application(); as app) {
+    <div class="max-w-lg">
+      <div class="flex items-start justify-between mb-6 flex-wrap gap-3">
+        <div>
+          <h2 class="text-neutral-950 text-xl font-bold mb-1">{{ app.candidate.name }}</h2>
+          <div class="flex items-center gap-3 text-xs text-neutral-400">
+            <span class="flex items-center gap-1"><ng-icon name="heroCalendarDays" size="14px" />{{ app.appliedAt | date:'dd/MM/yyyy' }}</span>
+            <span>Candidatura #{{ app.id }}</span>
+            <app-status-badge [status]="app.status" />
+          </div>
+        </div>
+      </div>
+
+      @if (vacancy(); as v) {
+        <div class="border border-neutral-200 rounded-xl p-4.5 mb-5">
+          <span class="text-neutral-500 text-xs uppercase font-semibold tracking-wide">Vaga</span>
+          <div class="text-neutral-950 text-sm font-semibold mt-1">{{ v.title }}</div>
+          @if (v.description) {
+            <p class="text-neutral-500 text-xs mt-1 leading-relaxed line-clamp-3">{{ v.description }}</p>
+          }
+          @if (v.requirements.length) {
+            <div class="flex flex-wrap gap-1.5 mt-2.5">
+              @for (req of v.requirements; track req.id) {
+                <span class="bg-neutral-100 text-neutral-700 px-2.5 py-1 rounded-md text-xs">{{ req.description }}</span>
+              }
+            </div>
+          }
+        </div>
+      }
+
+      @if (canReview()) {
+        <div class="border border-neutral-200 rounded-xl p-5">
+          <h4 class="text-neutral-950 text-sm font-semibold mb-3">Decisão Final</h4>
+
+          <div class="mb-4">
+            <label for="feedback-textarea" class="block text-neutral-950 text-sm font-semibold mb-1.5">Feedback</label>
+            <textarea id="feedback-textarea" formControlName="feedback" placeholder="Escreva um feedback para o candidato sobre esta decisão..."
+              class="w-full px-3.5 py-2.5 border border-neutral-300 rounded-lg text-sm text-neutral-950 min-h-[100px] resize-y focus:outline-none focus:ring-2 focus:ring-[#2241c8]"></textarea>
+          </div>
+
+          <div class="flex gap-3">
+            <button (click)="showApproveModal.set(true)" [disabled]="submitting()"
+              class="flex-1 bg-[#15803d] text-white border-none rounded-lg py-3 text-sm font-semibold cursor-pointer hover:bg-[#15803d]/90 disabled:opacity-50 inline-flex items-center justify-center gap-1.5">
+              <ng-icon name="heroCheckBadge" size="16px" />
+              Aprovar
+            </button>
+            <button (click)="showRejectModal.set(true)" [disabled]="submitting()"
+              class="flex-1 bg-red-600 text-white border-none rounded-lg py-3 text-sm font-semibold cursor-pointer hover:bg-red-700 disabled:opacity-50 inline-flex items-center justify-center gap-1.5">
+              <ng-icon name="heroXMark" size="16px" />
+              Reprovar
+            </button>
+          </div>
+        </div>
+      }
+
+      @if (application()?.status === 'PENDING') {
+        <div class="border border-blue-100 bg-blue-50 rounded-xl p-5 text-center">
+          <div class="text-2xl mb-2">
+            <ng-icon name="heroEye" size="28px" class="text-blue-600" />
+          </div>
+          <p class="text-blue-800 text-sm font-semibold mb-3">Esta candidatura ainda não foi revisada</p>
+          <button (click)="moveToReview()" [disabled]="submitting()"
+            class="bg-blue-700 text-white border-none rounded-lg px-6 py-2.5 text-sm font-semibold cursor-pointer hover:bg-blue-800 disabled:opacity-50">
+            @if (submitting()) { Movendo... } @else { Iniciar Revisão }
+          </button>
+        </div>
+      }
+
+      @if (isTerminal()) {
+        <div class="border rounded-xl p-5" [class.border-green-200]="application()?.status === 'APPROVED'" [class.bg-green-50]="application()?.status === 'APPROVED'" [class.border-red-200]="application()?.status === 'REJECTED'" [class.bg-red-50]="application()?.status === 'REJECTED'">
+          <div class="flex items-center gap-2 mb-3">
+            @if (application()?.status === 'APPROVED') {
+              <ng-icon name="heroCheckBadge" size="20px" class="text-green-600" />
+              <span class="text-green-800 text-sm font-semibold">Candidatura Aprovada</span>
+            } @else {
+              <ng-icon name="heroXCircle" size="20px" class="text-red-600" />
+              <span class="text-red-700 text-sm font-semibold">Candidatura Reprovada</span>
+            }
+          </div>
+          @if (submitting()) {
+            <div class="text-neutral-500 text-sm">Atualizando...</div>
+          }
+        </div>
+      }
+    </div>
+  }
+</div>
+
+<app-confirm-modal
+  [open]="showApproveModal()"
+  title="Aprovar candidatura?"
+  message="O candidato será aprovado para esta vaga. A decisão é final e não poderá ser alterada."
+  confirmLabel="Sim, Aprovar"
+  variant="primary"
+  [loading]="submitting()"
+  (confirm)="decide('APPROVED')"
+  (cancel)="showApproveModal.set(false)" />
+
+<app-confirm-modal
+  [open]="showRejectModal()"
+  title="Reprovar candidatura?"
+  message="O candidato será reprovado. A decisão é final e não poderá ser alterada."
+  confirmLabel="Sim, Reprovar"
+  variant="danger"
+  [loading]="submitting()"
+  (confirm)="decide('REJECTED')"
+  (cancel)="showRejectModal.set(false)" />

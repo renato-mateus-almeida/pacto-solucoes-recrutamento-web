@@ -29,11 +29,6 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/dashboard/dashboard').then(m => m.Dashboard),
     canActivate: [authGuard('USER')]
   },
-  // {
-  //   path: 'applications',
-  //   loadComponent: () => import('./pages/applications/my-applications/my-applications').then(m => m.MyApplications),
-  //   canActivate: [authGuard('USER')]
-  // },
   {
     path: 'admin/vacancies',
     loadComponent: () => import('./pages/admin/admin-vacancies/admin-vacancies').then(m => m.AdminVacancies),
@@ -45,6 +40,11 @@ export const routes: Routes = [
     canActivate: [authGuard('ADMIN')]
   },
   {
+    path: 'admin/vacancies/:id',
+    loadComponent: () => import('./pages/admin/admin-vacancy-form/admin-vacancy-form').then(m => m.AdminVacancyForm),
+    canActivate: [authGuard('ADMIN')]
+  },
+  {
     path: 'admin/vacancies/:vacancyId/applications',
     loadComponent: () => import('./pages/admin/admin-application-list/admin-application-list').then(m => m.AdminApplicationList),
     canActivate: [authGuard('ADMIN')]
@@ -52,11 +52,6 @@ export const routes: Routes = [
   {
     path: 'admin/vacancies/:vacancyId/applications/:id',
     loadComponent: () => import('./pages/admin/admin-application-detail/admin-application-detail').then(m => m.AdminApplicationDetail),
-    canActivate: [authGuard('ADMIN')]
-  },
-  {
-    path: 'admin/vacancies/:id',
-    loadComponent: () => import('./pages/admin/admin-vacancy-form/admin-vacancy-form').then(m => m.AdminVacancyForm),
     canActivate: [authGuard('ADMIN')]
   },
   { path: '**', redirectTo: '' }

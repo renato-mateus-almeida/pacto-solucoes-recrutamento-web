@@ -1,0 +1,76 @@
+<div class="bg-white px-6 py-7">
+  <h2 class="text-neutral-950 text-xl font-bold mb-1">Meu Painel</h2>
+  <p class="text-neutral-500 text-sm mb-6">Acompanhe o status das suas candidaturas</p>
+
+  @if (loading()) {
+    <div class="grid grid-cols-4 gap-3.5 mb-8">
+      @for (i of [1,2,3,4]; track i) {
+        <div class="border border-neutral-200 rounded-xl p-5 text-center animate-pulse">
+          <div class="h-8 bg-neutral-200 rounded w-8 mx-auto mb-1"></div>
+          <div class="h-3 bg-neutral-100 rounded w-16 mx-auto"></div>
+        </div>
+      }
+    </div>
+  } @else if (error()) {
+    <div class="text-center py-16">
+      <p class="text-neutral-500 mb-4">{{ error() }}</p>
+      <button (click)="load()" class="bg-[#2241c8] text-white font-semibold px-6 py-2.5 rounded-lg text-sm">Tentar novamente</button>
+    </div>
+  } @else if (data(); as d) {
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3.5 mb-8">
+      <div class="border border-neutral-200 rounded-xl p-5 text-center">
+        <div class="text-3xl font-bold text-amber-700 mb-1">{{ d.pending }}</div>
+        <div class="text-amber-800 text-sm flex items-center justify-center gap-1">
+          <ng-icon name="heroClock" size="14px" />
+          Pendentes
+        </div>
+      </div>
+      <div class="border border-neutral-200 rounded-xl p-5 text-center">
+        <div class="text-3xl font-bold text-blue-700 mb-1">{{ d.inReview }}</div>
+        <div class="text-blue-800 text-sm flex items-center justify-center gap-1">
+          <ng-icon name="heroMagnifyingGlass" size="14px" />
+          Em Análise
+        </div>
+      </div>
+      <div class="border border-neutral-200 rounded-xl p-5 text-center">
+        <div class="text-3xl font-bold text-green-700 mb-1">{{ d.approved }}</div>
+        <div class="text-green-800 text-sm flex items-center justify-center gap-1">
+          <ng-icon name="heroCheckCircle" size="14px" />
+          Aprovadas
+        </div>
+      </div>
+      <div class="border border-neutral-200 rounded-xl p-5 text-center">
+        <div class="text-3xl font-bold text-red-600 mb-1">{{ d.rejected }}</div>
+        <div class="text-red-700 text-sm flex items-center justify-center gap-1">
+          <ng-icon name="heroXCircle" size="14px" />
+          Reprovadas
+        </div>
+      </div>
+    </div>
+
+    @if (d.applications.length === 0) {
+      <div class="text-center py-12">
+        <ng-icon name="heroClipboardDocumentList" size="48px" class="text-neutral-300 mb-4 block mx-auto" />
+        <h4 class="text-neutral-950 font-bold mb-2">Nenhuma candidatura ainda</h4>
+        <p class="text-neutral-500 text-sm mb-5">Explore as vagas disponíveis e candidate-se!</p>
+        <a routerLink="/vacancies" class="bg-[#2241c8] text-white font-semibold px-6 py-2.5 rounded-lg text-sm no-underline inline-block">Ver Vagas Abertas</a>
+      </div>
+    } @else {
+      <h4 class="text-neutral-950 text-[15px] font-semibold mb-3">Todas as Candidaturas ({{ d.totalApplications }})</h4>
+      <div class="border border-neutral-200 rounded-xl overflow-hidden">
+        @for (app of d.applications; track app.id) {
+          <div class="flex items-center justify-between px-5 py-3.5 border-b border-neutral-100 last:border-b-0">
+            <div>
+              <strong class="text-neutral-950 text-sm">{{ app.vacancy.title }}</strong>
+              <div class="text-neutral-500 text-xs mt-0.5">Candidatura em {{ app.appliedAt | date:'dd/MM/yyyy' }}</div>
+            </div>
+            <div class="flex items-center gap-3">
+              <span class="text-neutral-300 text-xs">Feedback: {{ app.feedback ?? '—' }}</span>
+              <app-status-badge [status]="app.status"></app-status-badge>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  }
+</div>

@@ -24,11 +24,11 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/vacancies/vacancy-detail/vacancy-detail').then(m => m.VacancyDetail),
     canActivate: [authGuard('USER', 'ADMIN')]
   },
-  // {
-  //   path: 'dashboard',
-  //   loadComponent: () => import('./pages/dashboard/dashboard').then(m => m.Dashboard),
-  //   canActivate: [authGuard('USER')]
-  // },
+  {
+    path: 'dashboard',
+    loadComponent: () => import('./pages/dashboard/dashboard').then(m => m.Dashboard),
+    canActivate: [authGuard('USER')]
+  },
   // {
   //   path: 'applications',
   //   loadComponent: () => import('./pages/applications/my-applications/my-applications').then(m => m.MyApplications),

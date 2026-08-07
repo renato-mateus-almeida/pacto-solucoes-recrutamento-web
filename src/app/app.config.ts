@@ -14,6 +14,8 @@ import {
   heroInbox,
   heroCalendarDays,
   heroCheckCircle,
+  heroClock,
+  heroXCircle,
 } from '@ng-icons/heroicons/outline';
 import { routes } from './app.routes';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
@@ -35,6 +37,8 @@ export const appConfig: ApplicationConfig = {
       heroInbox,
       heroCalendarDays,
       heroCheckCircle,
+      heroClock,
+      heroXCircle,
     }),
   ]
 };

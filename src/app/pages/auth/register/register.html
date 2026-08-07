@@ -1,0 +1,80 @@
+<div class="min-h-screen flex items-center justify-center bg-white px-4">
+  <div class="w-full max-w-sm">
+    <h1 class="text-2xl font-bold text-neutral-950 mb-1">Criar conta</h1>
+    <p class="text-neutral-500 text-sm mb-8">Cadastre-se para acessar as vagas internas</p>
+
+    @if (error()) {
+      <div class="bg-red-50 border border-red-200 rounded-lg px-4 py-3 mb-6 text-red-700 text-sm font-medium">
+        {{ error() }}
+      </div>
+    }
+
+    <form [formGroup]="form" (ngSubmit)="submit()" class="flex flex-col gap-5">
+      <div>
+        <label class="block text-neutral-950 text-sm font-semibold mb-1.5">Nome</label>
+        <input formControlName="name" type="text" placeholder="Seu nome completo"
+          class="w-full px-3.5 py-2.5 border rounded-lg text-sm text-neutral-950 placeholder:text-neutral-400
+                 focus:outline-none focus:ring-2 focus:ring-[#2241c8] focus:border-transparent"
+          [class.border-red-500]="form.controls.name.touched && form.controls.name.invalid">
+        @if (form.controls.name.touched && form.controls.name.errors?.['required']) {
+          <span class="text-red-600 text-xs mt-1 block">Nome obrigatório</span>
+        }
+      </div>
+
+      <div>
+        <label class="block text-neutral-950 text-sm font-semibold mb-1.5">Email</label>
+        <input formControlName="email" type="email" placeholder="seu@email.com"
+          class="w-full px-3.5 py-2.5 border rounded-lg text-sm text-neutral-950 placeholder:text-neutral-400
+                 focus:outline-none focus:ring-2 focus:ring-[#2241c8] focus:border-transparent"
+          [class.border-red-500]="form.controls.email.touched && form.controls.email.invalid">
+        @if (form.controls.email.touched && form.controls.email.errors?.['required']) {
+          <span class="text-red-600 text-xs mt-1 block">Email obrigatório</span>
+        }
+        @if (form.controls.email.touched && form.controls.email.errors?.['email']) {
+          <span class="text-red-600 text-xs mt-1 block">Email inválido</span>
+        }
+      </div>
+
+      <div>
+        <label class="block text-neutral-950 text-sm font-semibold mb-1.5">Senha</label>
+        <input formControlName="password" type="password" placeholder="Senha"
+          class="w-full px-3.5 py-2.5 border rounded-lg text-sm text-neutral-950 placeholder:text-neutral-400
+                 focus:outline-none focus:ring-2 focus:ring-[#2241c8] focus:border-transparent"
+          [class.border-red-500]="form.controls.password.touched && form.controls.password.invalid">
+        @if (form.controls.password.touched && form.controls.password.errors?.['required']) {
+          <span class="text-red-600 text-xs mt-1 block">Senha obrigatória</span>
+        }
+        @if (form.controls.password.touched && form.controls.password.errors?.['minlength']) {
+          <span class="text-red-600 text-xs mt-1 block">Mínimo 6 caracteres</span>
+        }
+      </div>
+
+      <div>
+        <label class="block text-neutral-950 text-sm font-semibold mb-1.5">Confirmar Senha</label>
+        <input formControlName="confirmPassword" type="password" placeholder="Repita a senha"
+          class="w-full px-3.5 py-2.5 border rounded-lg text-sm text-neutral-950 placeholder:text-neutral-400
+                 focus:outline-none focus:ring-2 focus:ring-[#2241c8] focus:border-transparent"
+          [class.border-red-500]="form.controls.confirmPassword.touched && form.controls.confirmPassword.invalid">
+        @if (form.controls.confirmPassword.touched && form.controls.confirmPassword.errors?.['required']) {
+          <span class="text-red-600 text-xs mt-1 block">Confirme sua senha</span>
+        }
+      </div>
+
+      @if (form.hasError('passwordsMismatch') && form.controls.confirmPassword.touched) {
+        <div class="bg-red-50 border border-red-200 rounded-lg px-4 py-2 text-red-700 text-xs font-medium">
+          As senhas não conferem
+        </div>
+      }
+
+      <button type="submit" [disabled]="loading()"
+        class="w-full bg-[#2241c8] text-white font-semibold py-3 rounded-lg text-sm
+               hover:bg-[#2241c8]/90 disabled:opacity-50 disabled:cursor-not-allowed transition">
+        @if (loading()) { Criando conta... } @else { Criar Conta }
+      </button>
+    </form>
+
+    <p class="text-center text-neutral-500 text-sm mt-6">
+      Já tem conta? <a routerLink="/auth/login" class="text-[#2241c8] font-semibold hover:underline">Entre aqui</a>
+    </p>
+  </div>
+</div>

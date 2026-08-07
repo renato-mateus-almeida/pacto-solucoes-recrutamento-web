@@ -17,8 +17,9 @@ export class ApplicationService {
     return this.http.get<ApplicationResponse[]>(`${this.base}/me`);
   }
 
-  updateStatus(id: number, status: ApplicationStatus): Observable<ApplicationResponse> {
+  updateStatus(id: number, status: ApplicationStatus, feedback?: string): Observable<ApplicationResponse> {
     const body: ApplicationStatusUpdate = { status };
+    if (feedback) body.feedback = feedback;
     return this.http.patch<ApplicationResponse>(`${this.base}/${id}/status`, body);
   }
 }

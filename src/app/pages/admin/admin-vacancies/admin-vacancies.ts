@@ -1,4 +1,5 @@
-import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, signal, ChangeDetectionStrategy, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { NgIcon } from '@ng-icons/core';
 import { VacancyService } from '../../../core/services/vacancy';
@@ -17,6 +18,7 @@ import { FormsModule } from '@angular/forms';
 })
 export class AdminVacancies {
   private readonly vacancyService = inject(VacancyService);
+  private readonly destroyRef = inject(DestroyRef);
 
   protected readonly vacancies = signal<VacancyResponse[]>([]);
   protected readonly loading = signal(true);
@@ -27,6 +29,7 @@ export class AdminVacancies {
 
   protected closingId = signal<number | null>(null);
   protected closing = signal(false);
+  protected publishingId = signal<number | null>(null);
 
   constructor() { this.load(); }
 
@@ -37,7 +40,9 @@ export class AdminVacancies {
     if (this.statusFilter) params.status = this.statusFilter;
     if (this.searchTerm) params.requirement = this.searchTerm;
 
-    this.vacancyService.list(params).subscribe({
+    this.vacancyService.list(params).pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe({
       next: (data) => { this.vacancies.set(data); this.loading.set(false); },
       error: () => { this.error.set('Erro ao carregar vagas'); this.loading.set(false); }
     });
@@ -49,13 +54,21 @@ export class AdminVacancies {
     const id = this.closingId();
     if (!id) return;
     this.closing.set(true);
-    this.vacancyService.updateStatus(id, 'CLOSED').subscribe({
+    this.vacancyService.updateStatus(id, 'CLOSED').pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe({
       next: () => { this.closingId.set(null); this.closing.set(false); this.load(); },
       error: () => { this.closing.set(false); }
     });
   }
 
   protected publish(id: number): void {
-    this.vacancyService.updateStatus(id, 'OPEN').subscribe({ next: () => this.load() });
+    this.publishingId.set(id);
+    this.vacancyService.updateStatus(id, 'OPEN').pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe({
+      next: () => { this.publishingId.set(null); this.load(); },
+      error: () => { this.publishingId.set(null); }
+    });
   }
 }

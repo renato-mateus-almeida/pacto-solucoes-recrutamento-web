@@ -11,14 +11,20 @@
   </div>
 
   <div class="flex gap-2.5 mb-6">
-    <input [(ngModel)]="searchTerm" (keyup.enter)="load()" placeholder="Buscar por título ou requisito..."
-      class="flex-1 px-3.5 py-2.5 border border-neutral-300 rounded-lg text-sm text-neutral-950 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-[#2241c8]">
-    <select [(ngModel)]="statusFilter" (change)="load()" class="px-3.5 py-2.5 border border-neutral-300 rounded-lg text-sm text-neutral-950 bg-white">
-      <option value="">Todos os Status</option>
-      <option value="OPEN">OPEN</option>
-      <option value="DRAFT">DRAFT</option>
-      <option value="CLOSED">CLOSED</option>
-    </select>
+    <div class="flex-1">
+      <label for="admin-search" class="sr-only">Buscar vagas</label>
+      <input id="admin-search" [(ngModel)]="searchTerm" (keyup.enter)="load()" placeholder="Buscar por título ou requisito..."
+        class="w-full px-3.5 py-2.5 border border-neutral-300 rounded-lg text-sm text-neutral-950 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-[#2241c8]">
+    </div>
+    <div>
+      <label for="admin-status" class="sr-only">Filtrar por status</label>
+      <select id="admin-status" [(ngModel)]="statusFilter" (change)="load()" class="px-3.5 py-2.5 border border-neutral-300 rounded-lg text-sm text-neutral-950 bg-white">
+        <option value="">Todos os Status</option>
+        <option value="OPEN">OPEN</option>
+        <option value="DRAFT">DRAFT</option>
+        <option value="CLOSED">CLOSED</option>
+      </select>
+    </div>
   </div>
 
   @if (loading()) {
@@ -80,7 +86,9 @@
                   Editar
                 </a>
                 <button (click)="publish(v.id)"
-                  class="bg-[#2241c8] text-white border-none rounded-md px-3 py-1.5 text-xs font-semibold cursor-pointer hover:bg-[#2241c8]/90">
+                  [class.opacity-50]="publishingId() === v.id"
+                  [disabled]="publishingId() === v.id"
+                  class="bg-[#2241c8] text-white border-none rounded-md px-3 py-1.5 text-xs font-semibold cursor-pointer hover:bg-[#2241c8]/90 disabled:cursor-not-allowed">
                   Publicar
                 </button>
               }

@@ -2,7 +2,7 @@ import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 import { AuthService } from '../services/auth';
 
-export function authGuard(expectedRole: 'USER' | 'ADMIN'): CanActivateFn {
+export function authGuard(...expectedRoles: ('USER' | 'ADMIN')[]): CanActivateFn {
   return () => {
     const authService = inject(AuthService);
     const router = inject(Router);
@@ -11,7 +11,7 @@ export function authGuard(expectedRole: 'USER' | 'ADMIN'): CanActivateFn {
       return router.parseUrl('/auth/login');
     }
 
-    if (authService.userRole() !== expectedRole) {
+    if (!expectedRoles.includes(authService.userRole()!)) {
       return router.parseUrl('/');
     }
 

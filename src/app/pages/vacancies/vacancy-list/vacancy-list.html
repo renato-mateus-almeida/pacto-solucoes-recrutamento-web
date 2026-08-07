@@ -48,7 +48,12 @@
           </div>
           <div class="flex items-center justify-between">
             <span class="text-neutral-400 text-xs">📅 {{ vacancy.createdAt | date:'dd/MM/yyyy' }}</span>
-            @if (appliedIds().has(vacancy.id)) {
+            @if (authService.userRole() === 'ADMIN') {
+              <a [routerLink]="['/admin/applications']"
+                class="bg-[#2241c8] text-white no-underline rounded-md px-4.5 py-1.5 text-sm font-semibold hover:bg-[#2241c8]/90 transition">
+                Gerenciar Candidaturas
+              </a>
+            } @else if (appliedIds().has(vacancy.id)) {
               <span class="text-neutral-400 text-xs font-medium">Candidatura enviada</span>
             } @else {
               <button (click)="apply(vacancy.id)"

@@ -16,7 +16,13 @@ import {
   heroCheckCircle,
   heroClock,
   heroXCircle,
+  heroPlus,
+  heroEye,
+  heroChatBubbleLeft,
+  heroCheckBadge,
+  heroXMark,
 } from '@ng-icons/heroicons/outline';
+import { heroChevronRightSolid } from '@ng-icons/heroicons/solid';
 import { routes } from './app.routes';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
 
@@ -39,6 +45,12 @@ export const appConfig: ApplicationConfig = {
       heroCheckCircle,
       heroClock,
       heroXCircle,
+      heroPlus,
+      heroEye,
+      heroChatBubbleLeft,
+      heroCheckBadge,
+      heroXMark,
+      heroChevronRightSolid,
     }),
   ]
 };

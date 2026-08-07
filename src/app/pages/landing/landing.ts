@@ -1,5 +1,6 @@
-import { Component, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { AuthService } from '../../core/services/auth';
 
 @Component({
   selector: 'app-landing',
@@ -8,4 +9,6 @@ import { RouterLink } from '@angular/router';
   styleUrl: './landing.css',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class Landing {}
+export class Landing {
+  protected readonly authService = inject(AuthService);
+}

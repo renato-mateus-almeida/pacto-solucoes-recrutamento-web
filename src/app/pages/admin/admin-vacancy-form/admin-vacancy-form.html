@@ -36,14 +36,14 @@
           @for (req of requirements(); track req; let i = $index) {
             <span class="bg-indigo-50 text-indigo-700 px-2.5 py-1 rounded-md text-xs flex items-center gap-1.5">
               {{ req }}
-              <button type="button" (click)="removeRequirement(i)"
+              <button type="button" (click)="removeRequirement(i)" [attr.aria-label]="'Remover requisito: ' + req"
                 class="text-neutral-400 hover:text-red-500 text-sm cursor-pointer bg-transparent border-none leading-none p-0">×</button>
             </span>
           }
         </div>
         <div class="flex gap-2">
-          <input [ngModel]="newRequirement()" (ngModelChange)="newRequirement.set($event)" (keyup.enter)="addRequirement()"
-            placeholder="Adicionar requisito..." [ngModelOptions]="{standalone: true}"
+          <input [value]="newRequirement()" (input)="newRequirement.set($any($event.target).value)" (keyup.enter)="addRequirement()"
+            placeholder="Adicionar requisito..."
             class="flex-1 px-3.5 py-2.5 border border-neutral-300 rounded-lg text-sm text-neutral-950 focus:outline-none focus:ring-2 focus:ring-[#2241c8]">
           <button type="button" (click)="addRequirement()"
             class="border border-[#2241c8] text-[#2241c8] bg-white rounded-lg px-4 py-2.5 text-sm font-semibold cursor-pointer hover:bg-indigo-50">

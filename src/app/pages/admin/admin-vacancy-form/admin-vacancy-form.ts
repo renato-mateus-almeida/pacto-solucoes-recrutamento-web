@@ -1,15 +1,15 @@
-import { Component, inject, signal, ChangeDetectionStrategy, OnInit } from '@angular/core';
+import { Component, inject, signal, ChangeDetectionStrategy, OnInit, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { NgIcon } from '@ng-icons/core';
 import { VacancyService } from '../../../core/services/vacancy';
 import { VacancyStatus } from '../../../core/models/vacancy.model';
 import { HttpErrorResponse } from '@angular/common/http';
-import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-admin-vacancy-form',
-  imports: [ReactiveFormsModule, RouterLink, FormsModule, NgIcon],
+  imports: [ReactiveFormsModule, RouterLink, NgIcon],
   templateUrl: './admin-vacancy-form.html',
   styleUrl: './admin-vacancy-form.css',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -19,6 +19,7 @@ export class AdminVacancyForm implements OnInit {
   private readonly vacancyService = inject(VacancyService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly destroyRef = inject(DestroyRef);
 
   protected readonly form = this.fb.group({
     title: ['', Validators.required],
@@ -40,7 +41,7 @@ export class AdminVacancyForm implements OnInit {
       this.isEditing.set(true);
       this.editingId = Number(id);
       this.loading.set(true);
-      this.vacancyService.getById(this.editingId).subscribe({
+      this.vacancyService.getById(this.editingId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
         next: (v) => {
           this.form.patchValue({ title: v.title, description: v.description ?? '', status: v.status });
           this.requirements.set(v.requirements.map(r => r.description));
@@ -72,7 +73,7 @@ export class AdminVacancyForm implements OnInit {
       ? this.vacancyService.update(this.editingId!, data)
       : this.vacancyService.create(data);
 
-    request$.subscribe({
+    request$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => this.router.navigate(['/admin/vacancies']),
       error: (err: HttpErrorResponse) => {
         this.submitting.set(false);

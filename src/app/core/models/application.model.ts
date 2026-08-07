@@ -14,4 +14,5 @@ export interface ApplicationResponse {
 
 export interface ApplicationStatusUpdate {
   status: ApplicationStatus;
+  feedback?: string;
 }

@@ -1,0 +1,49 @@
+<div class="min-h-screen flex items-center justify-center bg-white px-4">
+  <div class="w-full max-w-sm">
+    <h1 class="text-2xl font-bold text-neutral-950 mb-1">Bem-vindo de volta</h1>
+    <p class="text-neutral-500 text-sm mb-8">Entre com suas credenciais para acessar o sistema</p>
+
+    @if (error()) {
+      <div class="bg-red-50 border border-red-200 rounded-lg px-4 py-3 mb-6 text-red-700 text-sm font-medium">
+        {{ error() }}
+      </div>
+    }
+
+    <form [formGroup]="form" (ngSubmit)="submit()" class="flex flex-col gap-5">
+      <div>
+        <label class="block text-neutral-950 text-sm font-semibold mb-1.5">Email</label>
+        <input formControlName="email" type="email" placeholder="seu@email.com"
+          class="w-full px-3.5 py-2.5 border rounded-lg text-sm text-neutral-950 placeholder:text-neutral-400
+                 focus:outline-none focus:ring-2 focus:ring-[#2241c8] focus:border-transparent"
+          [class.border-red-500]="form.controls.email.touched && form.controls.email.invalid">
+        @if (form.controls.email.touched && form.controls.email.errors?.['required']) {
+          <span class="text-red-600 text-xs mt-1 block">Email obrigatório</span>
+        }
+        @if (form.controls.email.touched && form.controls.email.errors?.['email']) {
+          <span class="text-red-600 text-xs mt-1 block">Email inválido</span>
+        }
+      </div>
+
+      <div>
+        <label class="block text-neutral-950 text-sm font-semibold mb-1.5">Senha</label>
+        <input formControlName="password" type="password" placeholder="Sua senha"
+          class="w-full px-3.5 py-2.5 border rounded-lg text-sm text-neutral-950 placeholder:text-neutral-400
+                 focus:outline-none focus:ring-2 focus:ring-[#2241c8] focus:border-transparent"
+          [class.border-red-500]="form.controls.password.touched && form.controls.password.invalid">
+        @if (form.controls.password.touched && form.controls.password.errors?.['required']) {
+          <span class="text-red-600 text-xs mt-1 block">Senha obrigatória</span>
+        }
+      </div>
+
+      <button type="submit" [disabled]="loading()"
+        class="w-full bg-[#2241c8] text-white font-semibold py-3 rounded-lg text-sm
+               hover:bg-[#2241c8]/90 disabled:opacity-50 disabled:cursor-not-allowed transition">
+        @if (loading()) { Entrando... } @else { Entrar }
+      </button>
+    </form>
+
+    <p class="text-center text-neutral-500 text-sm mt-6">
+      Não tem conta? <a routerLink="/auth/register" class="text-[#2241c8] font-semibold hover:underline">Cadastre-se</a>
+    </p>
+  </div>
+</div>

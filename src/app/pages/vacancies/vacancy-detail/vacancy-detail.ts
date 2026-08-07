@@ -1,5 +1,6 @@
 import { Component, inject, signal, ChangeDetectionStrategy, OnInit } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { NgIcon } from '@ng-icons/core';
 import { VacancyService } from '../../../core/services/vacancy';
 import { ApplicationService } from '../../../core/services/application';
 import { AuthService } from '../../../core/services/auth';
@@ -10,7 +11,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 
 @Component({
   selector: 'app-vacancy-detail',
-  imports: [RouterLink, StatusBadge, DatePipe],
+  imports: [RouterLink, StatusBadge, DatePipe, NgIcon],
   templateUrl: './vacancy-detail.html',
   styleUrl: './vacancy-detail.css',
   changeDetection: ChangeDetectionStrategy.OnPush

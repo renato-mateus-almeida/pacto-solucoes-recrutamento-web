@@ -1,5 +1,6 @@
 import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { NgIcon } from '@ng-icons/core';
 import { VacancyService } from '../../../core/services/vacancy';
 import { VacancyResponse, VacancyStatus } from '../../../core/models/vacancy.model';
 import { ApplicationService } from '../../../core/services/application';
@@ -10,7 +11,7 @@ import { DatePipe } from '@angular/common';
 
 @Component({
   selector: 'app-vacancy-list',
-  imports: [RouterLink, FormsModule, DatePipe],
+  imports: [RouterLink, FormsModule, DatePipe, NgIcon],
   templateUrl: './vacancy-list.html',
   styleUrl: './vacancy-list.css',
   changeDetection: ChangeDetectionStrategy.OnPush

@@ -1,0 +1,65 @@
+<div class="bg-white px-6 py-7">
+  <a routerLink="/vacancies" class="text-neutral-500 text-sm no-underline inline-block mb-5 hover:text-neutral-700">← Voltar para Vagas</a>
+
+  @if (loading()) {
+    <div class="animate-pulse">
+      <div class="h-6 bg-neutral-200 rounded w-2/3 mb-3"></div>
+      <div class="h-4 bg-neutral-100 rounded w-full mb-2"></div>
+      <div class="h-4 bg-neutral-100 rounded w-3/4"></div>
+    </div>
+  } @else if (error()) {
+    <div class="text-center py-16">
+      <p class="text-neutral-500">{{ error() }}</p>
+    </div>
+  } @else if (vacancy(); as v) {
+    <div class="flex items-start justify-between mb-5 flex-wrap gap-3">
+      <div>
+        <h2 class="text-neutral-950 text-2xl font-bold mb-2">{{ v.title }}</h2>
+        <div class="flex gap-4 text-xs text-neutral-400">
+          <span>📅 Publicada em {{ v.createdAt | date:'dd/MM/yyyy' }}</span>
+          <span>👤 por {{ v.createdBy.name }}</span>
+          <app-status-badge [status]="v.status"></app-status-badge>
+        </div>
+      </div>
+      @if (!applied() && v.status === 'OPEN') {
+        <button (click)="apply()" [disabled]="applying()"
+          class="bg-[#2241c8] text-white border-none rounded-lg px-7 py-3 text-sm font-semibold cursor-pointer hover:bg-[#2241c8]/90 disabled:opacity-50 transition">
+          @if (applying()) { Enviando... } @else { Candidatar-se }
+        </button>
+      }
+    </div>
+
+    <div class="mb-7">
+      <h4 class="text-neutral-950 text-[15px] font-semibold mb-2.5">Descrição</h4>
+      <p class="text-neutral-700 text-sm leading-relaxed">{{ v.description }}</p>
+    </div>
+
+    <div class="mb-7">
+      <h4 class="text-neutral-950 text-[15px] font-semibold mb-2.5">Requisitos</h4>
+      <div class="flex flex-wrap gap-2">
+        @for (req of v.requirements; track req.id) {
+          <span class="bg-neutral-100 text-neutral-700 px-3.5 py-1.5 rounded-lg text-sm">{{ req.description }}</span>
+        }
+      </div>
+    </div>
+
+    @if (applied()) {
+      <div class="bg-green-50 border border-green-200 rounded-xl px-5 py-4 flex items-center justify-between">
+        <div>
+          <span class="text-green-700 font-semibold text-sm">✅ Você já se candidatou a esta vaga</span>
+          <span class="text-neutral-500 text-sm block mt-0.5">Candidatura enviada</span>
+        </div>
+        <a routerLink="/applications" class="text-[#2241c8] text-sm font-medium no-underline">Ver candidatura →</a>
+      </div>
+    } @else if (v.status === 'OPEN') {
+      <div class="bg-neutral-50 border border-neutral-200 rounded-xl p-5 text-center">
+        <p class="text-neutral-950 text-sm font-semibold mb-3">Interessado nesta vaga?</p>
+        <p class="text-neutral-500 text-sm mb-4">Candidate-se agora e acompanhe o status no seu painel.</p>
+        <button (click)="apply()" [disabled]="applying()"
+          class="bg-[#2241c8] text-white border-none rounded-lg px-8 py-3 text-sm font-semibold cursor-pointer hover:bg-[#2241c8]/90 disabled:opacity-50 transition">
+          Candidatar-se
+        </button>
+      </div>
+    }
+  }
+</div>

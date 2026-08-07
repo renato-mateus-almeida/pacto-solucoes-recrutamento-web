@@ -1,0 +1,64 @@
+<div class="bg-white px-6 py-7">
+  <h2 class="text-neutral-950 text-xl font-bold mb-1">Vagas Abertas</h2>
+  <p class="text-neutral-500 text-sm mb-6">Encontre a vaga ideal e candidate-se</p>
+
+  <div class="flex gap-2.5 mb-6">
+    <input [(ngModel)]="searchTerm" (keyup.enter)="load()" placeholder="🔍 Buscar por título ou requisito..."
+      class="flex-1 px-3.5 py-2.5 border border-neutral-300 rounded-lg text-sm text-neutral-950 placeholder:text-neutral-400
+             focus:outline-none focus:ring-2 focus:ring-[#2241c8] focus:border-transparent">
+    <select [(ngModel)]="statusFilter" (change)="load()"
+      class="px-3.5 py-2.5 border border-neutral-300 rounded-lg text-sm text-neutral-950 bg-white">
+      <option value="">Todos os Status</option>
+      <option value="OPEN">OPEN</option>
+      <option value="CLOSED">CLOSED</option>
+    </select>
+  </div>
+
+  @if (loading()) {
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+      @for (i of [1,2,3,4]; track i) {
+        <div class="border border-neutral-200 rounded-xl p-4.5 animate-pulse">
+          <div class="h-4 bg-neutral-200 rounded w-3/4 mb-3"></div>
+          <div class="h-3 bg-neutral-100 rounded w-full mb-2"></div>
+          <div class="h-3 bg-neutral-100 rounded w-1/2"></div>
+        </div>
+      }
+    </div>
+  } @else if (error()) {
+    <div class="text-center py-16">
+      <p class="text-neutral-500 mb-4">{{ error() }}</p>
+      <button (click)="load()" class="bg-[#2241c8] text-white font-semibold px-6 py-2.5 rounded-lg text-sm">Tentar novamente</button>
+    </div>
+  } @else if (vacancies().length === 0) {
+    <div class="text-center py-16">
+      <div class="text-4xl mb-4">📭</div>
+      <h3 class="text-neutral-950 font-bold mb-2">Nenhuma vaga encontrada</h3>
+      <p class="text-neutral-500 text-sm">Tente ajustar os filtros ou buscar por outro termo.</p>
+    </div>
+  } @else {
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+      @for (vacancy of vacancies(); track vacancy.id) {
+        <div class="border border-neutral-200 rounded-xl p-4.5">
+          <a [routerLink]="['/vacancies', vacancy.id]" class="text-neutral-950 font-semibold text-[15px] hover:text-[#2241c8] no-underline block mb-2">{{ vacancy.title }}</a>
+          <p class="text-neutral-500 text-sm mb-2.5 leading-relaxed">{{ vacancy.description }}</p>
+          <div class="flex flex-wrap gap-1.5 mb-3.5">
+            @for (req of vacancy.requirements; track req.id) {
+              <span class="bg-neutral-100 text-neutral-700 px-2.5 py-1 rounded-md text-xs">{{ req.description }}</span>
+            }
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-neutral-400 text-xs">📅 {{ vacancy.createdAt | date:'dd/MM/yyyy' }}</span>
+            @if (appliedIds().has(vacancy.id)) {
+              <span class="text-neutral-400 text-xs font-medium">Candidatura enviada</span>
+            } @else {
+              <button (click)="apply(vacancy.id)"
+                class="bg-[#2241c8] text-white border-none rounded-md px-4.5 py-1.5 text-sm font-semibold cursor-pointer hover:bg-[#2241c8]/90 transition">
+                Candidatar-se
+              </button>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>

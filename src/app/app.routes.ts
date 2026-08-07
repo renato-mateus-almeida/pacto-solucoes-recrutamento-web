@@ -14,16 +14,16 @@ export const routes: Routes = [
     path: 'auth/register',
     loadComponent: () => import('./pages/auth/register/register').then(m => m.Register)
   },
-  // {
-  //   path: 'vacancies',
-  //   loadComponent: () => import('./pages/vacancies/vacancy-list/vacancy-list').then(m => m.VacancyList),
-  //   canActivate: [authGuard('USER')]
-  // },
-  // {
-  //   path: 'vacancies/:id',
-  //   loadComponent: () => import('./pages/vacancies/vacancy-detail/vacancy-detail').then(m => m.VacancyDetail),
-  //   canActivate: [authGuard('USER')]
-  // },
+  {
+    path: 'vacancies',
+    loadComponent: () => import('./pages/vacancies/vacancy-list/vacancy-list').then(m => m.VacancyList),
+    canActivate: [authGuard('USER')]
+  },
+  {
+    path: 'vacancies/:id',
+    loadComponent: () => import('./pages/vacancies/vacancy-detail/vacancy-detail').then(m => m.VacancyDetail),
+    canActivate: [authGuard('USER')]
+  },
   // {
   //   path: 'dashboard',
   //   loadComponent: () => import('./pages/dashboard/dashboard').then(m => m.Dashboard),

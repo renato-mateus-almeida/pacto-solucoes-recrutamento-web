@@ -21,6 +21,7 @@ import {
   heroChatBubbleLeft,
   heroCheckBadge,
   heroXMark,
+  heroBellAlert,
 } from '@ng-icons/heroicons/outline';
 import { heroChevronRightSolid } from '@ng-icons/heroicons/solid';
 import { routes } from './app.routes';
@@ -50,6 +51,7 @@ export const appConfig: ApplicationConfig = {
       heroChatBubbleLeft,
       heroCheckBadge,
       heroXMark,
+      heroBellAlert,
       heroChevronRightSolid,
     }),
   ]

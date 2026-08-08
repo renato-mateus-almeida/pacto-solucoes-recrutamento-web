@@ -14,43 +14,74 @@
         Cadastrar
       </a>
     </div>
-  } @else if (authService.userRole() === 'USER') {
-    <div class="flex items-center gap-3 md:gap-6">
-      <a routerLink="/" class="text-white font-bold text-lg tracking-tight no-underline flex items-center gap-1.5">
-        <ng-icon name="heroBuildingOffice" size="20px" />
-        Recrutamento
-      </a>
-      <a routerLink="/dashboard" routerLinkActive="!text-[#2d53fa] font-semibold"
-        class="text-neutral-400 text-sm hover:text-white transition no-underline">Dashboard</a>
-      <a routerLink="/vacancies" routerLinkActive="!text-[#2d53fa] font-semibold"
-        class="text-neutral-400 text-sm hover:text-white transition no-underline">Vagas</a>
-    </div>
-    <div class="flex items-center gap-2 md:gap-3 text-neutral-300 text-sm">
-      <span class="flex items-center gap-1">
-        <ng-icon name="heroUserCircle" size="16px" />
-        {{ authService.userName() }}
-      </span>
-      <button (click)="logout()"
-        class="text-neutral-500 hover:text-white cursor-pointer bg-transparent border-none p-0 leading-none" title="Sair">
-        <ng-icon name="heroArrowRightOnRectangle" size="16px" />
-      </button>
-    </div>
-  } @else if (authService.userRole() === 'ADMIN') {
-    <div class="flex items-center gap-8">
-      <a routerLink="/admin/vacancies" class="text-white font-bold text-lg tracking-tight no-underline flex items-center gap-1.5">
-        <ng-icon name="heroBuildingOffice" size="20px" />
-        Recrutamento
-      </a>
-      <a routerLink="/admin/vacancies" routerLinkActive="!text-[#2d53fa] font-semibold"
-        class="text-neutral-400 text-sm hover:text-white transition no-underline">Vagas</a>
+  } @else {
+    @if (authService.userRole() === 'USER') {
+      <div class="flex items-center gap-3 md:gap-6">
+        <a routerLink="/" class="text-white font-bold text-lg tracking-tight no-underline flex items-center gap-1.5">
+          <ng-icon name="heroBuildingOffice" size="20px" />
+          Recrutamento
+        </a>
+        <a routerLink="/dashboard" routerLinkActive="!text-[#2d53fa] font-semibold"
+          class="text-neutral-400 text-sm hover:text-white transition no-underline">Dashboard</a>
+        <a routerLink="/vacancies" routerLinkActive="!text-[#2d53fa] font-semibold"
+          class="text-neutral-400 text-sm hover:text-white transition no-underline">Vagas</a>
+      </div>
+    } @else if (authService.userRole() === 'ADMIN') {
+      <div class="flex items-center gap-8">
+        <a routerLink="/admin/vacancies" class="text-white font-bold text-lg tracking-tight no-underline flex items-center gap-1.5">
+          <ng-icon name="heroBuildingOffice" size="20px" />
+          Recrutamento
+        </a>
+        <a routerLink="/admin/vacancies" routerLinkActive="!text-[#2d53fa] font-semibold"
+          class="text-neutral-400 text-sm hover:text-white transition no-underline">Vagas</a>
+      </div>
+    }
 
-    </div>
-    <div class="flex items-center gap-3 text-neutral-300 text-sm">
+    <div class="flex items-center gap-2 md:gap-3 text-neutral-300 text-sm">
+      <div class="relative">
+        <button (click)="toggleDropdown()"
+          class="text-neutral-400 hover:text-white cursor-pointer bg-transparent border-none p-1.5 leading-none relative"
+          title="Notificacoes">
+          <ng-icon name="heroBellAlert" size="18px" />
+          @if (notificationService.unreadCount() > 0) {
+            <span class="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[16px] h-[16px] flex items-center justify-center px-0.5">
+              {{ notificationService.unreadCount() > 9 ? '9+' : notificationService.unreadCount() }}
+            </span>
+          }
+        </button>
+
+        @if (dropdownOpen()) {
+          <div class="absolute right-0 mt-2 w-80 bg-[#1a1a1a] border border-neutral-700 rounded-xl shadow-xl z-50 overflow-hidden">
+            <div class="px-4 py-3 border-b border-neutral-700 flex items-center justify-between">
+              <span class="text-white text-sm font-semibold">Notificacoes</span>
+            </div>
+            <div class="max-h-72 overflow-y-auto">
+              @if (notificationService.notifications().length === 0) {
+                <div class="px-4 py-6 text-center text-neutral-500 text-sm">
+                  Nenhuma notificacao
+                </div>
+              } @else {
+                @for (n of notificationService.notifications(); track n.id) {
+                  <button (click)="markAsRead(n.id)"
+                    class="w-full text-left px-4 py-3 border-b border-neutral-800 hover:bg-neutral-800/50 transition cursor-pointer bg-transparent border-x-0 border-t-0"
+                    [class.opacity-60]="n.read">
+                    <p class="text-neutral-200 text-sm leading-relaxed">{{ n.message }}</p>
+                    <p class="text-neutral-500 text-xs mt-1">{{ n.createdAt | date:'dd/MM/yyyy HH:mm' }}</p>
+                  </button>
+                }
+              }
+            </div>
+          </div>
+        }
+      </div>
+
       <span class="flex items-center gap-1">
         <ng-icon name="heroUserCircle" size="16px" />
         {{ authService.userName() }}
       </span>
-      <span class="bg-[#2d53fa] text-white px-2.5 py-0.5 rounded-lg text-xs font-semibold">ADMIN</span>
+      @if (authService.userRole() === 'ADMIN') {
+        <span class="bg-[#2d53fa] text-white px-2.5 py-0.5 rounded-lg text-xs font-semibold">ADMIN</span>
+      }
       <button (click)="logout()"
         class="text-neutral-500 hover:text-white cursor-pointer bg-transparent border-none p-0 leading-none" title="Sair">
         <ng-icon name="heroArrowRightOnRectangle" size="16px" />

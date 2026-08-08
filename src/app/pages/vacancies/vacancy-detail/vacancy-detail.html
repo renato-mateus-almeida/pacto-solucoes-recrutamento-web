@@ -38,17 +38,19 @@
       }
     </div>
 
-    <div class="mb-7">
-      <h4 class="text-neutral-950 text-[15px] font-semibold mb-2.5">Descrição</h4>
-      <p class="text-neutral-700 text-sm leading-relaxed">{{ v.description }}</p>
-    </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-7">
+      <div class="md:col-span-1">
+        <h4 class="text-neutral-950 text-[15px] font-semibold mb-2.5">Descrição</h4>
+        <p class="text-neutral-700 text-sm leading-relaxed whitespace-pre-line">{{ v.description }}</p>
+      </div>
 
-    <div class="mb-7">
-      <h4 class="text-neutral-950 text-[15px] font-semibold mb-2.5">Requisitos</h4>
-      <div class="flex flex-wrap gap-2">
-        @for (req of v.requirements; track req.id) {
-          <span class="inline-flex items-center rounded-md bg-[#2241c8]/10 px-3 py-1.5 text-sm font-medium text-[#2241c8] ring-1 ring-[#2241c8]/30">{{ req.description }}</span>
-        }
+      <div class="md:col-span-1">
+        <h4 class="text-neutral-950 text-[15px] font-semibold mb-2.5">Requisitos</h4>
+        <div class="flex flex-wrap gap-2">
+          @for (req of v.requirements; track req.id) {
+            <span class="inline-flex items-center rounded-md bg-[#2241c8]/10 px-3 py-1.5 text-sm font-medium text-[#2241c8] ring-1 ring-[#2241c8]/30">{{ req.description }}</span>
+          }
+        </div>
       </div>
     </div>
 

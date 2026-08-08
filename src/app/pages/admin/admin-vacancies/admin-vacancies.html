@@ -56,7 +56,7 @@
             <strong class="text-neutral-950 text-[15px]">{{ v.title }}</strong>
             <app-status-badge [status]="v.status" />
           </div>
-          <p class="text-neutral-500 text-sm mb-2.5 leading-relaxed line-clamp-2">{{ v.description }}</p>
+          <p class="text-neutral-500 text-sm mb-2.5 leading-relaxed line-clamp-2 whitespace-pre-line">{{ v.description }}</p>
           <div class="flex flex-wrap gap-1.5 mb-3.5">
             @for (req of v.requirements; track req.id) {
               <span class="inline-flex items-center rounded-md bg-[#2241c8]/10 px-2 py-1 text-xs font-medium text-[#2241c8] ring-1 ring-[#2241c8]/30">{{ req.description }}</span>

@@ -53,7 +53,7 @@ export class VacancyList {
   protected readonly applyingId = signal<number | null>(null);
 
   protected readonly openCount = computed(() =>
-    this.vacancies().filter(v => v.status === 'OPEN').length
+    this.vacancies().filter(v => v.status === 'OPEN' && !this.appliedIds().has(v.id)).length
   );
 
   protected readonly isNew = (createdAt: string): boolean => {

@@ -81,7 +81,7 @@
                 </a>
                 <button (click)="confirmClose(v.id)"
                   class="bg-red-600 text-white border-none rounded-md px-3 py-1.5 text-xs font-semibold cursor-pointer hover:bg-red-700">
-                  Fechar
+                  Encerrar
                 </button>
               } @else if (v.status === 'DRAFT') {
                 <a [routerLink]="['/admin/vacancies', v.id]"
@@ -105,9 +105,9 @@
 
   <app-confirm-modal
     [open]="closingId() !== null"
-    title="Fechar vaga?"
-    message="Ao fechar esta vaga, todas as candidaturas PENDENTES e EM ANÁLISE serão automaticamente reprovadas. Candidaturas já APROVADAS ou REPROVADAS não serão alteradas."
-    confirmLabel="Sim, Fechar Vaga"
+    title="Encerrar vaga?"
+    message="Ao encerrar esta vaga, todas as candidaturas PENDENTES e EM ANÁLISE serão automaticamente reprovadas. Candidaturas já APROVADAS ou REPROVADAS não serão alteradas."
+    confirmLabel="Sim, Encerrar Vaga"
     variant="danger"
     [loading]="closing()"
     (confirm)="closeVacancy()"

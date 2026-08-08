@@ -58,7 +58,7 @@ export class AdminVacancies {
       takeUntilDestroyed(this.destroyRef)
     ).subscribe({
       next: () => { this.closingId.set(null); this.closing.set(false); this.load(); },
-      error: () => { this.closing.set(false); }
+      error: () => { this.closingId.set(null); this.closing.set(false); }
     });
   }
 

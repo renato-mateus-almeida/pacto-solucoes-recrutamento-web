@@ -12,7 +12,7 @@ export class VacancyService {
   list(params?: { status?: VacancyStatus; requirement?: string }): Observable<VacancyResponse[]> {
     let httpParams = new HttpParams();
     if (params?.status) httpParams = httpParams.set('status', params.status);
-    if (params?.requirement) httpParams = httpParams.set('requirement', params.requirement);
+    if (params?.requirement) httpParams = httpParams.set('search', params.requirement);
     return this.http.get<VacancyResponse[]>(this.base, { params: httpParams });
   }
 

@@ -1,4 +1,4 @@
-import { Component, inject, signal, ChangeDetectionStrategy, OnInit, DestroyRef } from '@angular/core';
+import { Component, inject, signal, ChangeDetectionStrategy, DestroyRef, ChangeDetectorRef } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -10,7 +10,7 @@ import { VacancyResponse } from '../../../core/models/vacancy.model';
 import { StatusBadge } from '../../../shared/components/status-badge/status-badge';
 import { ConfirmModal } from '../../../shared/components/confirm-modal/confirm-modal';
 import { DatePipe } from '@angular/common';
-import { HttpErrorResponse } from '@angular/common/http';
+import { switchMap, map, of, catchError, EMPTY } from 'rxjs';
 
 @Component({
   selector: 'app-admin-application-detail',
@@ -19,12 +19,13 @@ import { HttpErrorResponse } from '@angular/common/http';
   styleUrl: './admin-application-detail.css',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class AdminApplicationDetail implements OnInit {
+export class AdminApplicationDetail {
   private readonly route = inject(ActivatedRoute);
   private readonly vacancyService = inject(VacancyService);
   private readonly applicationService = inject(ApplicationService);
   private readonly fb = inject(FormBuilder).nonNullable;
   private readonly destroyRef = inject(DestroyRef);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   protected readonly vacancy = signal<VacancyResponse | null>(null);
   protected readonly application = signal<ApplicationResponse | null>(null);
@@ -40,49 +41,44 @@ export class AdminApplicationDetail implements OnInit {
   });
 
   protected vacancyId!: number;
-  private applicationId!: number;
 
-  ngOnInit(): void {
-    this.vacancyId = Number(this.route.snapshot.paramMap.get('vacancyId'));
-    this.applicationId = Number(this.route.snapshot.paramMap.get('id'));
-    this.loadData();
-  }
+  constructor() {
+    const vacancyId = Number(this.route.snapshot.paramMap.get('vacancyId'));
+    const applicationId = Number(this.route.snapshot.paramMap.get('id'));
+    this.vacancyId = vacancyId;
 
-  protected loadData(): void {
-    this.loading.set(true);
-    this.error.set(null);
-
-    this.vacancyService.getById(this.vacancyId).pipe(
+    this.vacancyService.getById(vacancyId).pipe(
+      switchMap(v => {
+        this.vacancy.set(v);
+        return this.vacancyService.listApplications(vacancyId);
+      }),
+      map(apps => apps.find(a => a.id === applicationId)),
+      switchMap(app => {
+        if (!app) {
+          this.error.set('Candidatura não encontrada');
+          return of(null);
+        }
+        this.application.set(app);
+        if (app.status === 'PENDING') {
+          return this.applicationService.updateStatus(applicationId, 'IN_REVIEW');
+        }
+        return of(app);
+      }),
+      catchError(() => {
+        this.error.set('Vaga não encontrada');
+        return of(null);
+      }),
       takeUntilDestroyed(this.destroyRef)
     ).subscribe({
-      next: (v) => {
-        this.vacancy.set(v);
-        this.vacancyService.listApplications(this.vacancyId).pipe(
-          takeUntilDestroyed(this.destroyRef)
-        ).subscribe({
-          next: (apps) => {
-            const app = apps.find(a => a.id === this.applicationId);
-            if (app) {
-              this.application.set(app);
-              if (app.status === 'PENDING') {
-                this.applicationService.updateStatus(this.applicationId, 'IN_REVIEW').pipe(
-                  takeUntilDestroyed(this.destroyRef)
-                ).subscribe({
-                  next: (updated) => { this.application.set(updated); this.loading.set(false); },
-                  error: () => { this.loading.set(false); }
-                });
-              } else {
-                this.loading.set(false);
-              }
-            } else {
-              this.error.set('Candidatura não encontrada');
-              this.loading.set(false);
-            }
-          },
-          error: () => { this.error.set('Erro ao carregar candidatura'); this.loading.set(false); }
-        });
+      next: (result) => {
+        if (result) this.application.set(result);
+        this.loading.set(false);
+        this.cdr.detectChanges();
       },
-      error: () => { this.error.set('Vaga não encontrada'); this.loading.set(false); }
+      error: () => {
+        this.loading.set(false);
+        this.cdr.detectChanges();
+      }
     });
   }
 
@@ -91,18 +87,20 @@ export class AdminApplicationDetail implements OnInit {
     this.submitting.set(true);
     this.showApproveModal.set(false);
     this.showRejectModal.set(false);
-    this.applicationService.updateStatus(this.applicationId, status, feedback).pipe(
+
+    const vacancyId = Number(this.route.snapshot.paramMap.get('vacancyId'));
+    const applicationId = Number(this.route.snapshot.paramMap.get('id'));
+
+    this.applicationService.updateStatus(applicationId, status, feedback).pipe(
       takeUntilDestroyed(this.destroyRef)
     ).subscribe({
       next: (updated) => {
         this.application.set(updated);
         this.submitting.set(false);
       },
-      error: (err: HttpErrorResponse) => {
+      error: () => {
         this.submitting.set(false);
-        if (err.status === 422) {
-          this.error.set('Transição de status inválida');
-        }
+        this.error.set('Transição de status inválida');
       }
     });
   }

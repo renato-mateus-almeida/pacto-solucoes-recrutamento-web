@@ -74,16 +74,15 @@
                   <ng-icon name="heroClipboardDocumentList" size="14px" />
                   Candidaturas
                 </a>
-                <a [routerLink]="['/admin/vacancies', v.id]"
-                  class="border border-neutral-300 text-neutral-700 rounded-md px-3 py-1.5 text-xs font-medium no-underline hover:bg-neutral-50 inline-flex items-center gap-1">
-                  <ng-icon name="heroPencilSquare" size="14px" />
-                  Editar
-                </a>
                 <button (click)="confirmClose(v.id)"
                   class="bg-red-600 text-white border-none rounded-md px-3 py-1.5 text-xs font-semibold cursor-pointer hover:bg-red-700">
                   Encerrar
                 </button>
               } @else if (v.status === 'DRAFT') {
+                <button (click)="confirmDelete(v.id)"
+                  class="bg-red-600 text-white border-none rounded-md px-3 py-1.5 text-xs font-semibold cursor-pointer hover:bg-red-700">
+                  Excluir
+                </button>
                 <a [routerLink]="['/admin/vacancies', v.id]"
                   class="border border-neutral-300 text-neutral-700 rounded-md px-3 py-1.5 text-xs font-medium no-underline hover:bg-neutral-50 inline-flex items-center gap-1">
                   <ng-icon name="heroPencilSquare" size="14px" />
@@ -112,4 +111,14 @@
     [loading]="closing()"
     (confirm)="closeVacancy()"
     (cancel)="closingId.set(null)" />
+
+  <app-confirm-modal
+    [open]="deletingId() !== null"
+    title="Excluir vaga?"
+    message="Esta ação é irreversível. A vaga em rascunho será removida permanentemente."
+    confirmLabel="Sim, Excluir"
+    variant="danger"
+    [loading]="deleting()"
+    (confirm)="deleteVacancy()"
+    (cancel)="deletingId.set(null)" />
 </div>

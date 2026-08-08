@@ -15,7 +15,7 @@
         </div>
       </div>
     } @else {
-      <form [formGroup]="form" (ngSubmit)="submit()">
+      <form [formGroup]="form">
         <div class="bg-white rounded-2xl shadow-sm border border-neutral-200 p-6 md:p-8 space-y-6">
           <h2 class="text-neutral-950 text-lg font-bold">{{ isEditing() ? 'Editar Vaga' : 'Nova Vaga' }}</h2>
 
@@ -23,35 +23,11 @@
             <div class="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-red-700 text-sm font-medium">{{ error() }}</div>
           }
 
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            <div>
-              <label class="block text-neutral-950 text-sm font-semibold mb-1.5">Título *</label>
-              <input formControlName="title" placeholder="Ex: Desenvolvedor Backend"
-                class="w-full px-3.5 py-2.5 border rounded-lg text-sm text-neutral-950 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-[#2241c8] focus:border-transparent"
-                [class.border-red-500]="form.controls.title.touched && form.controls.title.invalid">
-            </div>
-
-            <div>
-              <label class="block text-neutral-950 text-sm font-semibold mb-1.5">Status</label>
-              <div class="flex rounded-lg border border-neutral-200 bg-neutral-100 p-0.5">
-                <button type="button" (click)="setStatus('OPEN')"
-                  class="flex-1 rounded-md py-2 px-3 text-xs font-semibold transition cursor-pointer border-none"
-                  [class.bg-white]="form.value.status === 'OPEN'"
-                  [class.shadow-sm]="form.value.status === 'OPEN'"
-                  [class.text-[#2241c8]]="form.value.status === 'OPEN'"
-                  [class.text-neutral-500]="form.value.status !== 'OPEN'">
-                  Aberta
-                </button>
-                <button type="button" (click)="setStatus('DRAFT')"
-                  class="flex-1 rounded-md py-2 px-3 text-xs font-semibold transition cursor-pointer border-none"
-                  [class.bg-white]="form.value.status === 'DRAFT'"
-                  [class.shadow-sm]="form.value.status === 'DRAFT'"
-                  [class.text-amber-600]="form.value.status === 'DRAFT'"
-                  [class.text-neutral-500]="form.value.status !== 'DRAFT'">
-                  Rascunho
-                </button>
-              </div>
-            </div>
+          <div>
+            <label class="block text-neutral-950 text-sm font-semibold mb-1.5">Título *</label>
+            <input formControlName="title" placeholder="Ex: Desenvolvedor Backend"
+              class="w-full px-3.5 py-2.5 border rounded-lg text-sm text-neutral-950 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-[#2241c8] focus:border-transparent"
+              [class.border-red-500]="form.controls.title.touched && form.controls.title.invalid">
           </div>
 
           <div>
@@ -92,12 +68,33 @@
             class="bg-white text-neutral-700 border border-neutral-300 rounded-lg px-6 py-2.5 text-sm font-medium no-underline text-center hover:bg-neutral-50 transition">
             Cancelar
           </a>
-          <button type="submit" [disabled]="submitting()"
-            class="bg-[#2241c8] text-white border-none rounded-lg px-6 py-2.5 text-sm font-semibold cursor-pointer hover:bg-[#2241c8]/90 disabled:opacity-50 transition">
-            @if (submitting()) { Salvando... } @else { {{ isEditing() ? 'Salvar Alterações' : 'Criar Vaga' }} }
-          </button>
+          @if (!isPublishedAsOpen()) {
+            <button type="button" (click)="saveAsDraft()" [disabled]="submitting()"
+              class="bg-white text-neutral-700 border border-neutral-300 rounded-lg px-6 py-2.5 text-sm font-medium hover:bg-neutral-50 disabled:opacity-50 transition">
+              Salvar como rascunho
+            </button>
+            <button type="button" (click)="confirmPublish()" [disabled]="submitting()"
+              class="bg-[#2241c8] text-white border-none rounded-lg px-6 py-2.5 text-sm font-semibold cursor-pointer hover:bg-[#2241c8]/90 disabled:opacity-50 transition">
+              @if (submitting()) { Salvando... } @else { {{ isEditing() ? 'Publicar Vaga' : 'Criar Vaga' }} }
+            </button>
+          } @else {
+            <button type="button" (click)="saveEdits()" [disabled]="submitting()"
+              class="bg-[#2241c8] text-white border-none rounded-lg px-6 py-2.5 text-sm font-semibold cursor-pointer hover:bg-[#2241c8]/90 disabled:opacity-50 transition">
+              @if (submitting()) { Salvando... } @else { Salvar Alterações }
+            </button>
+          }
         </div>
       </form>
     }
   </div>
 </div>
+
+<app-confirm-modal
+  [open]="showPublishModal()"
+  title="Publicar vaga?"
+  message="Deseja publicar essa vaga? não será possível realizar alterações após confirmação"
+  confirmLabel="Sim, Publicar"
+  variant="primary"
+  [loading]="submitting()"
+  (confirm)="publish()"
+  (cancel)="showPublishModal.set(false)" />

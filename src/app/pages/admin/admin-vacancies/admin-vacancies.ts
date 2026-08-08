@@ -43,6 +43,8 @@ export class AdminVacancies {
   protected closingId = signal<number | null>(null);
   protected closing = signal(false);
   protected publishingId = signal<number | null>(null);
+  protected deletingId = signal<number | null>(null);
+  protected deleting = signal(false);
 
   protected load(): void {
     const params: { status?: VacancyStatus; requirement?: string } = {};
@@ -72,6 +74,20 @@ export class AdminVacancies {
     ).subscribe({
       next: () => { this.publishingId.set(null); this.load(); },
       error: () => { this.publishingId.set(null); }
+    });
+  }
+
+  protected confirmDelete(id: number): void { this.deletingId.set(id); }
+
+  protected deleteVacancy(): void {
+    const id = this.deletingId();
+    if (!id) return;
+    this.deleting.set(true);
+    this.vacancyService.delete(id).pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe({
+      next: () => { this.deletingId.set(null); this.deleting.set(false); this.load(); },
+      error: () => { this.deletingId.set(null); this.deleting.set(false); }
     });
   }
 }

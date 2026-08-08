@@ -1,16 +1,16 @@
-import { Component, inject, signal, ChangeDetectionStrategy, DestroyRef, effect } from '@angular/core';
+import { Component, inject, signal, ChangeDetectionStrategy, DestroyRef } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { rxResource } from '@angular/core/rxjs-interop';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { NgIcon } from '@ng-icons/core';
 import { VacancyService } from '../../../core/services/vacancy';
 import { VacancyStatus } from '../../../core/models/vacancy.model';
+import { ConfirmModal } from '../../../shared/components/confirm-modal/confirm-modal';
 import { HttpErrorResponse } from '@angular/common/http';
 
 @Component({
   selector: 'app-admin-vacancy-form',
-  imports: [ReactiveFormsModule, RouterLink, NgIcon],
+  imports: [ReactiveFormsModule, RouterLink, NgIcon, ConfirmModal],
   templateUrl: './admin-vacancy-form.html',
   styleUrl: './admin-vacancy-form.css',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -33,6 +33,8 @@ export class AdminVacancyForm {
   protected readonly submitting = signal(false);
   protected readonly error = signal<string | null>(null);
   protected readonly isEditing = signal(false);
+  protected readonly originalStatus = signal<VacancyStatus | null>(null);
+  protected readonly showPublishModal = signal(false);
   private editingId: number | null = null;
 
   constructor() {
@@ -55,6 +57,7 @@ export class AdminVacancyForm {
         next: (v) => {
           this.form.patchValue({ title: v.title, description: v.description ?? '', status: v.status });
           this.requirements.set(v.requirements.map(r => r.description));
+          this.originalStatus.set(v.status);
           this.loading.set(false);
         },
         error: () => { this.error.set('Erro ao carregar vaga'); this.loading.set(false); }
@@ -78,8 +81,32 @@ export class AdminVacancyForm {
     this.form.controls.status.setValue(status);
   }
 
-  protected submit(): void {
+  protected readonly isPublishedAsOpen = () =>
+    this.isEditing() && this.originalStatus() === 'OPEN';
+
+  protected confirmPublish(): void {
     if (this.form.invalid) { this.form.markAllAsTouched(); return; }
+    this.showPublishModal.set(true);
+  }
+
+  protected publish(): void {
+    this.form.controls.status.setValue('OPEN');
+    this.showPublishModal.set(false);
+    this.doSubmit();
+  }
+
+  protected saveAsDraft(): void {
+    if (this.form.invalid) { this.form.markAllAsTouched(); return; }
+    this.form.controls.status.setValue('DRAFT');
+    this.doSubmit();
+  }
+
+  protected saveEdits(): void {
+    if (this.form.invalid) { this.form.markAllAsTouched(); return; }
+    this.doSubmit();
+  }
+
+  private doSubmit(): void {
     this.submitting.set(true);
     this.error.set(null);
     const data = { ...this.form.getRawValue(), requirements: this.requirements() };

@@ -30,30 +30,7 @@
           <app-status-badge [status]="v.status"></app-status-badge>
         </div>
       </div>
-      @if (authService.userRole() === 'ADMIN') {
-        <div class="flex gap-2">
-          @if (v.status === 'OPEN') {
-            <button (click)="updateStatus('CLOSED')" [disabled]="updatingStatus()"
-              class="bg-red-600 text-white border-none rounded-lg px-4 py-2 text-xs font-semibold cursor-pointer hover:bg-red-700 disabled:opacity-50 transition">
-              Fechar Vaga
-            </button>
-          } @else if (v.status === 'CLOSED') {
-            <button (click)="updateStatus('OPEN')" [disabled]="updatingStatus()"
-              class="bg-green-700 text-white border-none rounded-lg px-4 py-2 text-xs font-semibold cursor-pointer hover:bg-green-800 disabled:opacity-50 transition">
-              Reabrir Vaga
-            </button>
-          } @else if (v.status === 'DRAFT') {
-            <button (click)="updateStatus('OPEN')" [disabled]="updatingStatus()"
-              class="bg-[#2241c8] text-white border-none rounded-lg px-4 py-2 text-xs font-semibold cursor-pointer hover:bg-[#2241c8]/90 disabled:opacity-50 transition">
-              Publicar
-            </button>
-          }
-          <a [routerLink]="['/admin/applications']"
-            class="bg-[#2241c8] text-white no-underline rounded-lg px-4 py-2 text-xs font-semibold inline-flex items-center hover:bg-[#2241c8]/90 transition">
-            Gerenciar Candidaturas
-          </a>
-        </div>
-      } @else if (!applied() && v.status === 'OPEN') {
+      @if (!applied() && v.status === 'OPEN') {
         <button (click)="apply()" [disabled]="applying()"
           class="bg-[#2241c8] text-white border-none rounded-lg px-7 py-3 text-sm font-semibold cursor-pointer hover:bg-[#2241c8]/90 disabled:opacity-50 transition">
           @if (applying()) { Enviando... } @else { Candidatar-se }
@@ -75,28 +52,26 @@
       </div>
     </div>
 
-    @if (authService.userRole() !== 'ADMIN') {
-      @if (applied()) {
-        <div class="bg-green-50 border border-green-200 rounded-xl px-5 py-4 flex items-center justify-between">
-          <div>
-            <span class="text-green-700 font-semibold text-sm flex items-center gap-1.5">
-              <ng-icon name="heroCheckCircle" size="16px" />
-              Você já se candidatou a esta vaga
-            </span>
-            <span class="text-neutral-500 text-sm block mt-0.5">Candidatura enviada</span>
-          </div>
-          <a routerLink="/dashboard" class="text-[#2241c8] text-sm font-medium no-underline">Ver candidatura →</a>
+    @if (applied()) {
+      <div class="bg-green-50 border border-green-200 rounded-xl px-5 py-4 flex items-center justify-between">
+        <div>
+          <span class="text-green-700 font-semibold text-sm flex items-center gap-1.5">
+            <ng-icon name="heroCheckCircle" size="16px" />
+            Você já se candidatou a esta vaga
+          </span>
+          <span class="text-neutral-500 text-sm block mt-0.5">Candidatura enviada</span>
         </div>
-      } @else if (v.status === 'OPEN') {
-        <div class="bg-neutral-50 border border-neutral-200 rounded-xl p-5 text-center">
-          <p class="text-neutral-950 text-sm font-semibold mb-3">Interessado nesta vaga?</p>
-          <p class="text-neutral-500 text-sm mb-4">Candidate-se agora e acompanhe o status no seu painel.</p>
-          <button (click)="apply()" [disabled]="applying()"
-            class="bg-[#2241c8] text-white border-none rounded-lg px-8 py-3 text-sm font-semibold cursor-pointer hover:bg-[#2241c8]/90 disabled:opacity-50 transition">
-            Candidatar-se
-          </button>
-        </div>
-      }
+        <a routerLink="/dashboard" class="text-[#2241c8] text-sm font-medium no-underline">Ver candidatura →</a>
+      </div>
+    } @else if (v.status === 'OPEN') {
+      <div class="bg-neutral-50 border border-neutral-200 rounded-xl p-5 text-center">
+        <p class="text-neutral-950 text-sm font-semibold mb-3">Interessado nesta vaga?</p>
+        <p class="text-neutral-500 text-sm mb-4">Candidate-se agora e acompanhe o status no seu painel.</p>
+        <button (click)="apply()" [disabled]="applying()"
+          class="bg-[#2241c8] text-white border-none rounded-lg px-8 py-3 text-sm font-semibold cursor-pointer hover:bg-[#2241c8]/90 disabled:opacity-50 transition">
+          Candidatar-se
+        </button>
+      </div>
     }
   }
 </div>

@@ -11,10 +11,11 @@
   </div>
 
   <div class="flex gap-2.5 mb-6">
-    <div class="flex-1">
+    <div class="flex-1 relative">
       <label for="admin-search" class="sr-only">Buscar vagas</label>
+      <ng-icon name="heroMagnifyingGlass" size="16px" class="text-neutral-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
       <input id="admin-search" [(ngModel)]="searchTerm" (keyup.enter)="load()" placeholder="Buscar por título ou requisito..."
-        class="w-full px-3.5 py-2.5 border border-neutral-300 rounded-lg text-sm text-neutral-950 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-[#2241c8]">
+        class="w-full pl-9 pr-3.5 py-2.5 border border-neutral-300 rounded-lg text-sm text-neutral-950 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-[#2241c8] focus:border-transparent">
     </div>
     <div>
       <label for="admin-status" class="sr-only">Filtrar por status</label>
@@ -50,7 +51,7 @@
   } @else {
     <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
       @for (v of vacancies(); track v.id) {
-        <div class="border border-neutral-200 rounded-xl p-4.5" [class.opacity-60]="v.status === 'CLOSED'">
+        <div class="border border-neutral-200 rounded-xl p-4.5 hover:border-[#2d53fa] transition" [class.opacity-60]="v.status === 'CLOSED'">
           <div class="flex items-start justify-between mb-2.5">
             <strong class="text-neutral-950 text-[15px]">{{ v.title }}</strong>
             <app-status-badge [status]="v.status" />
@@ -58,11 +59,14 @@
           <p class="text-neutral-500 text-sm mb-2.5 leading-relaxed line-clamp-2">{{ v.description }}</p>
           <div class="flex flex-wrap gap-1.5 mb-3.5">
             @for (req of v.requirements; track req.id) {
-              <span class="bg-neutral-100 text-neutral-700 px-2.5 py-1 rounded-md text-xs">{{ req.description }}</span>
+              <span class="inline-flex items-center rounded-md bg-[#2241c8]/10 px-2 py-1 text-xs font-medium text-[#2241c8] ring-1 ring-[#2241c8]/30">{{ req.description }}</span>
             }
           </div>
           <div class="flex items-center justify-between">
-            <span class="text-neutral-400 text-xs">Criada em {{ v.createdAt | date:'dd/MM/yyyy' }}</span>
+            <span class="text-neutral-400 text-xs flex items-center gap-1">
+              <ng-icon name="heroCalendarDays" size="14px" />
+              {{ v.createdAt | date:'dd/MM/yyyy' }}
+            </span>
             <div class="flex gap-1.5">
               @if (v.status === 'OPEN') {
                 <a [routerLink]="['/admin/vacancies', v.id, 'applications']"

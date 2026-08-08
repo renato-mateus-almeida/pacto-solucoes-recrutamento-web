@@ -17,12 +17,12 @@ export const routes: Routes = [
   {
     path: 'vacancies',
     loadComponent: () => import('./pages/vacancies/vacancy-list/vacancy-list').then(m => m.VacancyList),
-    canActivate: [authGuard('USER', 'ADMIN')]
+    canActivate: [authGuard('USER')]
   },
   {
     path: 'vacancies/:id',
     loadComponent: () => import('./pages/vacancies/vacancy-detail/vacancy-detail').then(m => m.VacancyDetail),
-    canActivate: [authGuard('USER', 'ADMIN')]
+    canActivate: [authGuard('USER')]
   },
   {
     path: 'dashboard',

@@ -4,7 +4,6 @@ import { NgIcon } from '@ng-icons/core';
 import { VacancyService } from '../../../core/services/vacancy';
 import { VacancyResponse, VacancyStatus } from '../../../core/models/vacancy.model';
 import { ApplicationService } from '../../../core/services/application';
-import { AuthService } from '../../../core/services/auth';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { DatePipe } from '@angular/common';
@@ -19,7 +18,6 @@ import { DatePipe } from '@angular/common';
 export class VacancyList {
   private readonly vacancyService = inject(VacancyService);
   private readonly applicationService = inject(ApplicationService);
-  protected readonly authService = inject(AuthService);
 
   protected readonly vacancies = signal<VacancyResponse[]>([]);
   protected readonly loading = signal(true);

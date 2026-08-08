@@ -3,8 +3,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { NgIcon } from '@ng-icons/core';
 import { VacancyService } from '../../../core/services/vacancy';
 import { ApplicationService } from '../../../core/services/application';
-import { AuthService } from '../../../core/services/auth';
-import { VacancyResponse, VacancyStatus } from '../../../core/models/vacancy.model';
+import { VacancyResponse } from '../../../core/models/vacancy.model';
 import { StatusBadge } from '../../../shared/components/status-badge/status-badge';
 import { DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -20,14 +19,12 @@ export class VacancyDetail implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly vacancyService = inject(VacancyService);
   private readonly applicationService = inject(ApplicationService);
-  protected readonly authService = inject(AuthService);
 
   protected readonly vacancy = signal<VacancyResponse | null>(null);
   protected readonly loading = signal(true);
   protected readonly error = signal<string | null>(null);
   protected readonly applied = signal(false);
   protected readonly applying = signal(false);
-  protected readonly updatingStatus = signal(false);
 
   ngOnInit(): void {
     const id = Number(this.route.snapshot.paramMap.get('id'));
@@ -49,21 +46,6 @@ export class VacancyDetail implements OnInit {
       error: (err: HttpErrorResponse) => {
         this.applying.set(false);
         if (err.status === 409) this.applied.set(true);
-      }
-    });
-  }
-
-  protected updateStatus(status: VacancyStatus): void {
-    const v = this.vacancy();
-    if (!v) return;
-    this.updatingStatus.set(true);
-    this.vacancyService.updateStatus(v.id, status).subscribe({
-      next: (updated) => {
-        this.vacancy.set(updated);
-        this.updatingStatus.set(false);
-      },
-      error: () => {
-        this.updatingStatus.set(false);
       }
     });
   }

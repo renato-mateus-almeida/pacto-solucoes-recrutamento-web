@@ -3,7 +3,6 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NgIcon } from '@ng-icons/core';
 import { VacancyService } from '../../../core/services/vacancy';
-import { ApplicationService } from '../../../core/services/application';
 import { VacancyResponse } from '../../../core/models/vacancy.model';
 import { ApplicationResponse, ApplicationStatus } from '../../../core/models/application.model';
 import { StatusBadge } from '../../../shared/components/status-badge/status-badge';
@@ -19,7 +18,6 @@ import { DatePipe } from '@angular/common';
 export class AdminApplicationList {
   private readonly route = inject(ActivatedRoute);
   private readonly vacancyService = inject(VacancyService);
-  private readonly applicationService = inject(ApplicationService);
   private readonly destroyRef = inject(DestroyRef);
 
   protected readonly vacancy = signal<VacancyResponse | null>(null);
@@ -30,7 +28,6 @@ export class AdminApplicationList {
   protected readonly vacancyError = signal<string | null>(null);
 
   protected readonly activeFilter = signal<ApplicationStatus | 'ALL'>('ALL');
-  protected readonly movingToReview = signal<Set<number>>(new Set());
 
   protected vacancyId!: number;
 
@@ -74,16 +71,6 @@ export class AdminApplicationList {
     ).subscribe({
       next: (data) => { this.applications.set(data); this.loading.set(false); },
       error: () => { this.error.set('Erro ao carregar candidaturas'); this.loading.set(false); }
-    });
-  }
-
-  protected startReview(app: ApplicationResponse): void {
-    this.movingToReview.update(s => { const ns = new Set(s); ns.add(app.id); return ns; });
-    this.applicationService.updateStatus(app.id, 'IN_REVIEW').pipe(
-      takeUntilDestroyed(this.destroyRef)
-    ).subscribe({
-      next: () => { this.loadApplications(); this.movingToReview.update(s => { const ns = new Set(s); ns.delete(app.id); return ns; }); },
-      error: () => { this.movingToReview.update(s => { const ns = new Set(s); ns.delete(app.id); return ns; }); }
     });
   }
 

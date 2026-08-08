@@ -64,7 +64,16 @@ export class AdminApplicationDetail implements OnInit {
             const app = apps.find(a => a.id === this.applicationId);
             if (app) {
               this.application.set(app);
-              this.loading.set(false);
+              if (app.status === 'PENDING') {
+                this.applicationService.updateStatus(this.applicationId, 'IN_REVIEW').pipe(
+                  takeUntilDestroyed(this.destroyRef)
+                ).subscribe({
+                  next: (updated) => { this.application.set(updated); this.loading.set(false); },
+                  error: () => { this.loading.set(false); }
+                });
+              } else {
+                this.loading.set(false);
+              }
             } else {
               this.error.set('Candidatura não encontrada');
               this.loading.set(false);
@@ -83,24 +92,6 @@ export class AdminApplicationDetail implements OnInit {
     this.showApproveModal.set(false);
     this.showRejectModal.set(false);
     this.applicationService.updateStatus(this.applicationId, status, feedback).pipe(
-      takeUntilDestroyed(this.destroyRef)
-    ).subscribe({
-      next: (updated) => {
-        this.application.set(updated);
-        this.submitting.set(false);
-      },
-      error: (err: HttpErrorResponse) => {
-        this.submitting.set(false);
-        if (err.status === 422) {
-          this.error.set('Transição de status inválida');
-        }
-      }
-    });
-  }
-
-  protected moveToReview(): void {
-    this.submitting.set(true);
-    this.applicationService.updateStatus(this.applicationId, 'IN_REVIEW').pipe(
       takeUntilDestroyed(this.destroyRef)
     ).subscribe({
       next: (updated) => {

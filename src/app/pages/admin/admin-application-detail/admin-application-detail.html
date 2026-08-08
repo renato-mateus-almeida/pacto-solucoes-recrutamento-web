@@ -70,19 +70,6 @@
         </div>
       }
 
-      @if (application()?.status === 'PENDING') {
-        <div class="border border-blue-100 bg-blue-50 rounded-xl p-5 text-center">
-          <div class="text-2xl mb-2">
-            <ng-icon name="heroEye" size="28px" class="text-blue-600" />
-          </div>
-          <p class="text-blue-800 text-sm font-semibold mb-3">Esta candidatura ainda não foi revisada</p>
-          <button (click)="moveToReview()" [disabled]="submitting()"
-            class="bg-blue-700 text-white border-none rounded-lg px-6 py-2.5 text-sm font-semibold cursor-pointer hover:bg-blue-800 disabled:opacity-50">
-            @if (submitting()) { Movendo... } @else { Iniciar Revisão }
-          </button>
-        </div>
-      }
-
       @if (isTerminal()) {
         <div class="border rounded-xl p-5" [class.border-green-200]="application()?.status === 'APPROVED'" [class.bg-green-50]="application()?.status === 'APPROVED'" [class.border-red-200]="application()?.status === 'REJECTED'" [class.bg-red-50]="application()?.status === 'REJECTED'">
           <div class="flex items-center gap-2 mb-3">

@@ -89,13 +89,7 @@
               </div>
               <div class="flex items-center gap-3 shrink-0 ml-4">
                 <app-status-badge [status]="app.status" />
-                @if (app.status === 'PENDING') {
-                  <button (click)="startReview(app); $event.stopPropagation(); $event.preventDefault()"
-                    [disabled]="movingToReview().has(app.id)"
-                    class="bg-blue-700 text-white border-none rounded-md px-4 py-1.5 text-xs font-semibold cursor-pointer hover:bg-blue-800 disabled:opacity-50">
-                    @if (movingToReview().has(app.id)) { Movendo... } @else { Revisar }
-                  </button>
-                } @else if (app.status === 'IN_REVIEW') {
+                @if (app.status === 'PENDING' || app.status === 'IN_REVIEW') {
                   <ng-icon name="heroChevronRightSolid" size="16px" class="text-neutral-300" />
                 } @else {
                   <span class="text-neutral-400 text-xs">Finalizado</span>

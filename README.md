@@ -1,59 +1,159 @@
-# Recrutamento
+# Pacto Soluções — Plataforma de Recrutamento (Web)
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.2.9.
+[![Angular](https://img.shields.io/badge/Angular-21.2-DD0031?logo=angular&logoColor=white)](https://angular.dev)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind-4.1-06B6D4?logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
+[![RxJS](https://img.shields.io/badge/RxJS-7.8-B7178C?logo=reactivex&logoColor=white)](https://rxjs.dev)
+[![Vitest](https://img.shields.io/badge/Vitest-4.0-6E9F18?logo=vitest&logoColor=white)](https://vitest.dev)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-## Development server
+Aplicação Angular para gestão de vagas e candidaturas. Interface web do sistema **Pacto Recrutamento** — um painel completo onde candidatos se inscrevem em vagas e administradores gerenciam o pipeline de seleção com avaliações e feedback.
 
-To start a local development server, run:
+---
+
+## 🎯 Funcionalidades
+
+### Usuário Candidato
+
+- [x] Landing page pública com acesso a login e registro
+- [x] Autenticação JWT com registro de novo usuário
+- [x] Listagem de vagas abertas com hero section, busca e filtro por status
+- [x] Contador de vagas disponíveis (exclui vagas já aplicadas, atualiza em tempo real)
+- [x] Badge "Novo" em vagas publicadas nos últimos 7 dias
+- [x] Quick Apply — candidatura direta no card, sem necessidade de navegar ao detalhe
+- [x] Indicador visual "Candidatura realizada" pós-aplicação
+- [x] Detalhe da vaga com descrição completa, requisitos e botão de candidatura
+- [x] Dashboard pessoal com histórico de candidaturas e filtro por status
+
+### Administrador
+
+- [x] Painel de gerenciamento de vagas com tabela, estatísticas (total, abertas, rascunhos, encerradas) e busca
+- [x] Criação de vagas com fluxo de rascunho e publicação
+- [x] Botões contextuais: `[Salvar como rascunho]` e `[Criar Vaga]` com modal de confirmação de publicação
+- [x] Edição de vagas — status travado como OPEN após publicação, edição apenas de campos de conteúdo
+- [x] Exclusão de vagas em rascunho com modal de confirmação
+- [x] Encerramento de vagas abertas
+- [x] Listagem de candidaturas por vaga com status e ações
+- [x] Detalhe da candidatura em layout de duas colunas (conteúdo principal + sidebar da vaga)
+- [x] Transição automática PENDING → IN_REVIEW ao abrir candidatura
+- [x] Avaliação do candidato com nota (1-5) e feedback textual
+- [x] Fluxo encadeado: `POST /evaluation` → `PATCH /status` (aprovar/reprovar)
+- [x] Exibição da avaliação registrada após submissão
+
+---
+
+## 🛠️ Tech Stack
+
+| Tecnologia | Versão | Uso |
+|------------|--------|-----|
+| Angular | 21.2 | Framework principal — standalone components, signals, lazy loading |
+| TypeScript | 5.9 | Tipagem estática e strict mode |
+| Tailwind CSS | 4.1 | Design system utilitário — estilização co-localizada, zero CSS não utilizado |
+| RxJS | 7.8 | Streams reativos para chamadas HTTP e fluxos encadeados (concatMap, switchMap) |
+| @ng-icons/heroicons | 35 | Ícones SVG tree-shakeable |
+| Vitest | 4.0 | Test runner nativo Angular — rápido e compatível com Vite |
+
+---
+
+## 🚀 Como Executar
+
+### Pré-requisitos
+
+- **Node.js** 20+
+- **npm** 11+
+- **Angular CLI** 21 (`npm install -g @angular/cli`)
+
+### Setup
 
 ```bash
-ng serve
+npm install
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
-
-## Code scaffolding
-
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+### Servidor de Desenvolvimento
 
 ```bash
-ng generate component component-name
+npm start
+# http://localhost:4200
 ```
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+O frontend espera que a API esteja rodando em `http://localhost:8080/api/v1`.  
+Configure o proxy reverso ou ajuste o `proxy.conf.json` conforme necessário.
+
+### Build de Produção
 
 ```bash
-ng generate --help
+npm run build
+# artefatos em dist/recrutamento
 ```
 
-## Building
-
-To build the project run:
+### Testes
 
 ```bash
-ng build
+npm test
 ```
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+---
 
-## Running unit tests
+## 📁 Estrutura do Projeto
 
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
-
-```bash
-ng test
+```
+src/
+├── app/
+│   ├── core/
+│   │   ├── guards/          # Route guards — authGuard por role (USER | ADMIN)
+│   │   ├── interceptors/    # AuthInterceptor — anexa token JWT em todas as requests
+│   │   ├── models/          # Interfaces TypeScript (Vacancy, Application, Evaluation, Auth, Dashboard)
+│   │   └── services/        # Camada de acesso à API (Vacancy, Application, Evaluation, Auth, Dashboard)
+│   ├── pages/
+│   │   ├── landing/         # Página inicial pública
+│   │   ├── auth/            # Login + Register
+│   │   ├── vacancies/       # Listagem (hero + cards) + Detalhe da vaga
+│   │   ├── dashboard/       # Painel do candidato — candidaturas por status
+│   │   └── admin/           # Gerenciar vagas, formulário, lista de candidaturas, detalhe
+│   └── shared/
+│       └── components/      # StatusBadge, ConfirmModal, Navbar
+├── app.routes.ts            # Rotas com lazy loading e guards por role
+├── app.config.ts            # Providers (HttpClient, Router, AuthInterceptor)
+└── index.html               # Entry point com classes Tailwind globais
 ```
 
-## Running end-to-end tests
+### Convenções do Projeto
 
-For end-to-end (e2e) testing, run:
+- **`@Component` sem `standalone: true`** — padrão no Angular 21+
+- **Signals para estado local** — `signal()`, `computed()`, `toSignal()`
+- **Sem `ngOnDestroy`** — `DestroyRef` + `takeUntilDestroyed()` para limpeza automática
+- **Inline templates** em componentes pequenos, **arquivos `.html` separados** em páginas
+- **`ReactiveFormsModule`** com `FormBuilder.nonNullable` para tipagem forte
+- **`ChangeDetectionStrategy.OnPush`** em todos os componentes — signals + `detectChanges()` pontual
 
-```bash
-ng e2e
-```
+---
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
+## 🏗️ Decisões Técnicas
 
-## Additional Resources
+| Decisão | Motivo |
+|---------|--------|
+| **Standalone Components** (default Angular 21) | Zero NgModules, tree-shaking nativo, menos boilerplate |
+| **Signals + OnPush** | Performance previsível — sem dependência de Zone.js, reavaliação granular |
+| **`toSignal` para dados GET** | Substitui `.subscribe()` manual em data fetching — limpeza automática, tipo reativo |
+| **`concatMap` para fluxos sequenciais** | `avaliação → mudança de status` precisa ser sequencial — `concatMap` garante ordem e captura a resposta intermediária |
+| **`switchMap` para dados com filtro reativo** | Listagem de vagas por filtro cancela requests pendentes automaticamente ao trocar parâmetros |
+| **Reactive Forms + `nonNullable`** | Tipagem forte nos controles, validação síncrona, sem `*ngIf` nos templates |
+| **Tailwind utilitário** | Estilização co-localizada com markup, zero CSS morto no bundle |
+| **Lazy Loading por feature** | Rotas públicas (`/vacancies`) e admin (`/admin`) em chunks separados, carregamento sob demanda |
+| **`AuthInterceptor` funcional** | Anexa token JWT em todas as requisições — sem boilerplate por serviço |
+| **ConfirmModal como componente genérico** | Reutilizado em 4 contextos diferentes (publicar, encerrar, excluir, aprovar/reprovar) com inputs configuráveis |
 
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+---
+
+## 🔗 Repositórios Relacionados
+
+| Repositório | Descrição |
+|-------------|-----------|
+| [pacto-solucoes-recrutamento-api](https://github.com/seu-user/pacto-solucoes-recrutamento-api) | API REST em Java/Spring Boot 3 |
+| [pacto-solucoes-recrutamento](https://github.com/seu-user/pacto-solucoes-recrutamento) | Repositório central com README geral e documentação |
+
+---
+
+## 📝 Licença
+
+MIT © 2026

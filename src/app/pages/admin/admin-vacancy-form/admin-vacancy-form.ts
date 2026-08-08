@@ -64,6 +64,10 @@ export class AdminVacancyForm implements OnInit {
     this.requirements.update(arr => arr.filter((_, i) => i !== index));
   }
 
+  protected setStatus(status: VacancyStatus): void {
+    this.form.controls.status.setValue(status);
+  }
+
   protected submit(): void {
     if (this.form.invalid) { this.form.markAllAsTouched(); return; }
     this.submitting.set(true);

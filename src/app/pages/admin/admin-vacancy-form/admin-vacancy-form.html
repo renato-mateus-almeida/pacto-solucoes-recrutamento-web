@@ -1,83 +1,103 @@
-<div class="bg-white px-6 py-7">
-  <a routerLink="/admin/vacancies" class="text-neutral-500 text-sm no-underline inline-flex items-center gap-1 mb-5 hover:text-neutral-700">
-    <ng-icon name="heroArrowLeft" size="14px" />
-    Voltar para Gerenciar Vagas
-  </a>
+<div class="min-h-[calc(100vh-56px)] bg-neutral-50 px-4 py-8 md:py-12">
+  <div class="max-w-lg mx-auto">
+    <a routerLink="/admin/vacancies" class="text-neutral-500 text-sm no-underline inline-flex items-center gap-1 mb-6 hover:text-neutral-700">
+      <ng-icon name="heroArrowLeft" size="14px" />
+      Voltar para Gerenciar Vagas
+    </a>
 
-  <h2 class="text-neutral-950 text-xl font-bold mb-6">{{ isEditing() ? 'Editar Vaga' : 'Nova Vaga' }}</h2>
-
-  @if (loading()) {
-    <div class="animate-pulse max-w-lg">
-      <div class="h-4 bg-neutral-200 rounded w-3/4 mb-3"></div>
-      <div class="h-4 bg-neutral-100 rounded w-full mb-2"></div>
-    </div>
-  } @else {
-    <form [formGroup]="form" (ngSubmit)="submit()" class="max-w-lg flex flex-col gap-5">
-      @if (error()) {
-        <div class="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-red-700 text-sm font-medium">{{ error() }}</div>
-      }
-
-      <div>
-        <label class="block text-neutral-950 text-sm font-semibold mb-1.5">Título *</label>
-        <input formControlName="title" placeholder="Ex: Desenvolvedor Backend"
-          class="w-full px-3.5 py-2.5 border rounded-lg text-sm text-neutral-950 focus:outline-none focus:ring-2 focus:ring-[#2241c8]"
-          [class.border-red-500]="form.controls.title.touched && form.controls.title.invalid">
-      </div>
-
-      <div>
-        <label class="block text-neutral-950 text-sm font-semibold mb-1.5">Descrição</label>
-        <textarea formControlName="description" placeholder="Descreva a vaga, responsabilidades e o time..."
-          class="w-full px-3.5 py-2.5 border rounded-lg text-sm text-neutral-950 min-h-[120px] resize-y focus:outline-none focus:ring-2 focus:ring-[#2241c8]"></textarea>
-      </div>
-
-      <div>
-        <label class="block text-neutral-950 text-sm font-semibold mb-1.5">Requisitos</label>
-        <div class="flex flex-wrap gap-1.5 min-h-[40px] border border-dashed border-neutral-300 rounded-lg p-2 mb-2">
-          @for (req of requirements(); track req; let i = $index) {
-            <span class="bg-indigo-50 text-indigo-700 px-2.5 py-1 rounded-md text-xs flex items-center gap-1.5">
-              {{ req }}
-              <button type="button" (click)="removeRequirement(i)" [attr.aria-label]="'Remover requisito: ' + req"
-                class="text-neutral-400 hover:text-red-500 text-sm cursor-pointer bg-transparent border-none leading-none p-0">×</button>
-            </span>
-          }
+    @if (loading()) {
+      <div class="bg-white rounded-2xl shadow-sm border border-neutral-200 p-6 md:p-8">
+        <div class="animate-pulse">
+          <div class="h-5 bg-neutral-200 rounded w-1/3 mb-6"></div>
+          <div class="h-4 bg-neutral-100 rounded w-full mb-4"></div>
+          <div class="h-32 bg-neutral-100 rounded w-full mb-4"></div>
+          <div class="h-4 bg-neutral-100 rounded w-3/4"></div>
         </div>
-        <div class="flex gap-2">
-          <input [value]="newRequirement()" (input)="newRequirement.set($any($event.target).value)" (keyup.enter)="addRequirement()"
-            placeholder="Adicionar requisito..."
-            class="flex-1 px-3.5 py-2.5 border border-neutral-300 rounded-lg text-sm text-neutral-950 focus:outline-none focus:ring-2 focus:ring-[#2241c8]">
-          <button type="button" (click)="addRequirement()"
-            class="border border-[#2241c8] text-[#2241c8] bg-white rounded-lg px-4 py-2.5 text-sm font-semibold cursor-pointer hover:bg-indigo-50">
-            + Adicionar
+      </div>
+    } @else {
+      <form [formGroup]="form" (ngSubmit)="submit()">
+        <div class="bg-white rounded-2xl shadow-sm border border-neutral-200 p-6 md:p-8 space-y-6">
+          <h2 class="text-neutral-950 text-lg font-bold">{{ isEditing() ? 'Editar Vaga' : 'Nova Vaga' }}</h2>
+
+          @if (error()) {
+            <div class="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-red-700 text-sm font-medium">{{ error() }}</div>
+          }
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <div>
+              <label class="block text-neutral-950 text-sm font-semibold mb-1.5">Título *</label>
+              <input formControlName="title" placeholder="Ex: Desenvolvedor Backend"
+                class="w-full px-3.5 py-2.5 border rounded-lg text-sm text-neutral-950 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-[#2241c8] focus:border-transparent"
+                [class.border-red-500]="form.controls.title.touched && form.controls.title.invalid">
+            </div>
+
+            <div>
+              <label class="block text-neutral-950 text-sm font-semibold mb-1.5">Status</label>
+              <div class="flex rounded-lg border border-neutral-200 bg-neutral-100 p-0.5">
+                <button type="button" (click)="setStatus('OPEN')"
+                  class="flex-1 rounded-md py-2 px-3 text-xs font-semibold transition cursor-pointer border-none"
+                  [class.bg-white]="form.value.status === 'OPEN'"
+                  [class.shadow-sm]="form.value.status === 'OPEN'"
+                  [class.text-[#2241c8]]="form.value.status === 'OPEN'"
+                  [class.text-neutral-500]="form.value.status !== 'OPEN'">
+                  Aberta
+                </button>
+                <button type="button" (click)="setStatus('DRAFT')"
+                  class="flex-1 rounded-md py-2 px-3 text-xs font-semibold transition cursor-pointer border-none"
+                  [class.bg-white]="form.value.status === 'DRAFT'"
+                  [class.shadow-sm]="form.value.status === 'DRAFT'"
+                  [class.text-amber-600]="form.value.status === 'DRAFT'"
+                  [class.text-neutral-500]="form.value.status !== 'DRAFT'">
+                  Rascunho
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-neutral-950 text-sm font-semibold mb-1.5">Descrição</label>
+            <textarea formControlName="description" placeholder="Descreva a vaga, responsabilidades e o time..."
+              class="w-full px-3.5 py-2.5 border border-neutral-300 rounded-lg text-sm text-neutral-950 placeholder:text-neutral-400 min-h-[120px] resize-y focus:outline-none focus:ring-2 focus:ring-[#2241c8] focus:border-transparent"></textarea>
+          </div>
+
+          <div>
+            <label class="block text-neutral-950 text-sm font-semibold mb-1.5">Requisitos</label>
+            <div class="bg-neutral-50 rounded-xl border border-dashed border-neutral-300 p-3 min-h-[44px]">
+              <div class="flex flex-wrap gap-1.5">
+                @for (req of requirements(); track req; let i = $index) {
+                  <span class="inline-flex items-center gap-1.5 bg-[#2241c8]/10 text-[#2241c8] ring-1 ring-[#2241c8]/30 px-2.5 py-1 rounded-md text-xs font-medium">
+                    {{ req }}
+                    <button type="button" (click)="removeRequirement(i)" [attr.aria-label]="'Remover requisito: ' + req"
+                      class="text-[#2241c8]/60 hover:text-red-500 cursor-pointer bg-transparent border-none p-0 leading-none text-sm">×</button>
+                  </span>
+                } @empty {
+                  <span class="text-neutral-400 text-xs">Nenhum requisito adicionado</span>
+                }
+              </div>
+            </div>
+            <div class="flex gap-2 mt-2">
+              <input [value]="newRequirement()" (input)="newRequirement.set($any($event.target).value)" (keyup.enter)="addRequirement()"
+                placeholder="Adicionar requisito..."
+                class="flex-1 px-3.5 py-2 border border-neutral-300 rounded-lg text-sm text-neutral-950 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-[#2241c8] focus:border-transparent">
+              <button type="button" (click)="addRequirement()"
+                class="bg-[#2241c8] text-white border-none rounded-lg px-4 text-sm font-semibold cursor-pointer hover:bg-[#2241c8]/90 transition">
+                +
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex justify-end gap-2.5 mt-4">
+          <a routerLink="/admin/vacancies"
+            class="bg-white text-neutral-700 border border-neutral-300 rounded-lg px-6 py-2.5 text-sm font-medium no-underline text-center hover:bg-neutral-50 transition">
+            Cancelar
+          </a>
+          <button type="submit" [disabled]="submitting()"
+            class="bg-[#2241c8] text-white border-none rounded-lg px-6 py-2.5 text-sm font-semibold cursor-pointer hover:bg-[#2241c8]/90 disabled:opacity-50 transition">
+            @if (submitting()) { Salvando... } @else { {{ isEditing() ? 'Salvar Alterações' : 'Criar Vaga' }} }
           </button>
         </div>
-      </div>
-
-      <div>
-        <label class="block text-neutral-950 text-sm font-semibold mb-2">Status *</label>
-        <div class="flex gap-2.5">
-          <label class="flex items-center gap-1.5 px-4 py-2.5 border-2 rounded-lg cursor-pointer"
-            [class.border-[#2241c8]]="form.value.status === 'OPEN'" [class.bg-indigo-50]="form.value.status === 'OPEN'"
-            [class.border-neutral-200]="form.value.status !== 'OPEN'">
-            <input type="radio" formControlName="status" value="OPEN" class="accent-[#2241c8]">
-            <span class="text-sm font-medium text-neutral-950">OPEN</span>
-          </label>
-          <label class="flex items-center gap-1.5 px-4 py-2.5 border-2 rounded-lg cursor-pointer"
-            [class.border-[#2241c8]]="form.value.status === 'DRAFT'" [class.bg-indigo-50]="form.value.status === 'DRAFT'"
-            [class.border-neutral-200]="form.value.status !== 'DRAFT'">
-            <input type="radio" formControlName="status" value="DRAFT" class="accent-[#2241c8]">
-            <span class="text-sm font-medium text-neutral-950">DRAFT</span>
-          </label>
-        </div>
-      </div>
-
-      <div class="flex gap-2.5">
-        <button type="submit" [disabled]="submitting()"
-          class="bg-[#2241c8] text-white border-none rounded-lg px-8 py-3 text-sm font-semibold cursor-pointer hover:bg-[#2241c8]/90 disabled:opacity-50">
-          @if (submitting()) { Salvando... } @else { {{ isEditing() ? 'Salvar Alterações' : 'Criar Vaga' }} }
-        </button>
-        <a routerLink="/admin/vacancies"
-          class="border border-neutral-300 text-neutral-700 bg-white rounded-lg px-8 py-3 text-sm font-medium no-underline text-center hover:bg-neutral-50">Cancelar</a>
-      </div>
-    </form>
-  }
+      </form>
+    }
+  </div>
 </div>

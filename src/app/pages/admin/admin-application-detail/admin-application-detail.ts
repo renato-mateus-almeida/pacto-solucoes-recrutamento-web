@@ -5,12 +5,14 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NgIcon } from '@ng-icons/core';
 import { VacancyService } from '../../../core/services/vacancy';
 import { ApplicationService } from '../../../core/services/application';
+import { EvaluationService } from '../../../core/services/evaluation.service';
 import { ApplicationResponse } from '../../../core/models/application.model';
+import { EvaluationRequest, EvaluationResponse } from '../../../core/models/evaluation.model';
 import { VacancyResponse } from '../../../core/models/vacancy.model';
 import { StatusBadge } from '../../../shared/components/status-badge/status-badge';
 import { ConfirmModal } from '../../../shared/components/confirm-modal/confirm-modal';
 import { DatePipe } from '@angular/common';
-import { switchMap, map, of, catchError, EMPTY } from 'rxjs';
+import { switchMap, map, of, catchError, concatMap } from 'rxjs';
 
 @Component({
   selector: 'app-admin-application-detail',
@@ -23,6 +25,7 @@ export class AdminApplicationDetail {
   private readonly route = inject(ActivatedRoute);
   private readonly vacancyService = inject(VacancyService);
   private readonly applicationService = inject(ApplicationService);
+  private readonly evaluationService = inject(EvaluationService);
   private readonly fb = inject(FormBuilder).nonNullable;
   private readonly destroyRef = inject(DestroyRef);
   private readonly cdr = inject(ChangeDetectorRef);
@@ -35,6 +38,9 @@ export class AdminApplicationDetail {
 
   protected readonly showApproveModal = signal(false);
   protected readonly showRejectModal = signal(false);
+
+  protected readonly selectedScore = signal(3);
+  protected readonly evaluation = signal<EvaluationResponse | null>(null);
 
   protected readonly feedbackForm = this.fb.group({
     feedback: ['', Validators.required]
@@ -74,6 +80,18 @@ export class AdminApplicationDetail {
         if (result) this.application.set(result);
         this.loading.set(false);
         this.cdr.detectChanges();
+
+        if (result && (result.status === 'APPROVED' || result.status === 'REJECTED')) {
+          this.evaluationService.getByApplication(applicationId).pipe(
+            takeUntilDestroyed(this.destroyRef)
+          ).subscribe({
+            next: (evaluation) => {
+              this.evaluation.set(evaluation);
+              this.cdr.detectChanges();
+            },
+            error: () => {}
+          });
+        }
       },
       error: () => {
         this.loading.set(false);
@@ -82,25 +100,40 @@ export class AdminApplicationDetail {
     });
   }
 
+  protected setScore(score: number): void {
+    this.selectedScore.set(score);
+  }
+
   protected decide(status: 'APPROVED' | 'REJECTED'): void {
     const feedback = this.feedbackForm.controls.feedback.value || undefined;
     this.submitting.set(true);
     this.showApproveModal.set(false);
     this.showRejectModal.set(false);
 
-    const vacancyId = Number(this.route.snapshot.paramMap.get('vacancyId'));
     const applicationId = Number(this.route.snapshot.paramMap.get('id'));
 
-    this.applicationService.updateStatus(applicationId, status, feedback).pipe(
-      takeUntilDestroyed(this.destroyRef)
+    const evaluationData: EvaluationRequest = {
+      score: this.selectedScore(),
+      ...(feedback && { feedback })
+    };
+
+    this.evaluationService.create(applicationId, evaluationData).pipe(
+      takeUntilDestroyed(this.destroyRef),
+      concatMap(evaluation => {
+        this.evaluation.set(evaluation);
+        this.cdr.detectChanges();
+        return this.applicationService.updateStatus(applicationId, status);
+      })
     ).subscribe({
       next: (updated) => {
         this.application.set(updated);
         this.submitting.set(false);
+        this.cdr.detectChanges();
       },
       error: () => {
         this.submitting.set(false);
-        this.error.set('Transição de status inválida');
+        this.error.set('Erro ao salvar avaliação');
+        this.cdr.detectChanges();
       }
     });
   }

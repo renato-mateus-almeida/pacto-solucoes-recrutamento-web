@@ -47,6 +47,25 @@
           </div>
         }
 
+        @if (evaluation()) {
+          <div class="rounded-2xl p-6 bg-neutral-50 border border-neutral-200 space-y-3">
+            <h3 class="text-neutral-950 text-[15px] font-semibold">Avaliação Registrada</h3>
+            <div class="flex items-center gap-2">
+              <span class="text-neutral-500 text-sm">Nota:</span>
+              <span class="text-neutral-950 text-sm font-bold">{{ evaluation()!.score }}/5</span>
+            </div>
+            @if (evaluation()!.feedback) {
+              <div>
+                <span class="text-neutral-500 text-sm block mb-1">Feedback:</span>
+                <p class="text-neutral-700 text-sm bg-white rounded-lg p-3 border border-neutral-200">{{ evaluation()!.feedback }}</p>
+              </div>
+            }
+            <div class="text-neutral-400 text-xs">
+              Avaliado por {{ evaluation()!.evaluator.name }} em {{ evaluation()!.createdAt | date:'dd/MM/yyyy' }}
+            </div>
+          </div>
+        }
+
         <div>
           <div class="flex items-start justify-between gap-4 mb-1">
             <h2 class="text-neutral-950 text-2xl font-bold">{{ app.candidate.name }}</h2>
@@ -66,13 +85,30 @@
         }
 
         @if (canReview()) {
-          <div class="bg-neutral-50 rounded-2xl border border-neutral-200 p-6 space-y-4">
+          <div class="bg-neutral-50 rounded-2xl border border-neutral-200 p-6 space-y-4" [formGroup]="feedbackForm">
             <h3 class="text-neutral-950 text-[15px] font-semibold">Decisão Final</h3>
 
             <div>
               <label for="feedback-textarea" class="block text-neutral-950 text-sm font-semibold mb-1.5">Feedback para o candidato</label>
               <textarea id="feedback-textarea" formControlName="feedback" placeholder="Explique o motivo da decisão, pontos fortes ou áreas de melhoria..."
                 class="w-full px-4 py-3 border border-neutral-300 rounded-xl text-sm text-neutral-950 placeholder:text-neutral-400 min-h-[140px] resize-y focus:outline-none focus:ring-2 focus:ring-[#2241c8] focus:border-transparent"></textarea>
+            </div>
+
+            <div>
+              <label class="block text-neutral-950 text-sm font-semibold mb-2">Nota (1-5)</label>
+              <div class="flex gap-1.5">
+                @for (score of [1,2,3,4,5]; track score) {
+                  <button type="button" (click)="setScore(score)"
+                    class="w-10 h-10 rounded-lg border-2 text-sm font-bold transition cursor-pointer bg-white"
+                    [class.border-[#2241c8]]="selectedScore() === score"
+                    [class.text-[#2241c8]]="selectedScore() === score"
+                    [class.bg-indigo-50]="selectedScore() === score"
+                    [class.border-neutral-200]="selectedScore() !== score"
+                    [class.text-neutral-400]="selectedScore() !== score">
+                    {{ score }}
+                  </button>
+                }
+              </div>
             </div>
 
             <div class="flex gap-3">

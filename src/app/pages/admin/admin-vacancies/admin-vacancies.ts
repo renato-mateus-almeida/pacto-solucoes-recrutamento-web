@@ -1,4 +1,4 @@
-import { Component, inject, signal, ChangeDetectionStrategy, DestroyRef } from '@angular/core';
+import { Component, inject, signal, computed, ChangeDetectionStrategy, DestroyRef } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { toSignal, toObservable } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
@@ -45,6 +45,11 @@ export class AdminVacancies {
   protected publishingId = signal<number | null>(null);
   protected deletingId = signal<number | null>(null);
   protected deleting = signal(false);
+
+  protected readonly totalCount = computed(() => this.vacancies().length);
+  protected readonly openCount = computed(() => this.vacancies().filter(v => v.status === 'OPEN').length);
+  protected readonly draftCount = computed(() => this.vacancies().filter(v => v.status === 'DRAFT').length);
+  protected readonly closedCount = computed(() => this.vacancies().filter(v => v.status === 'CLOSED').length);
 
   protected load(): void {
     const params: { status?: VacancyStatus; requirement?: string } = {};

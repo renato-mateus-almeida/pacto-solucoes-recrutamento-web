@@ -1,61 +1,137 @@
-<div class="bg-white px-6 py-7">
-  <h2 class="text-neutral-950 text-xl font-bold mb-1">Vagas Abertas</h2>
-  <p class="text-neutral-500 text-sm mb-6">Encontre a vaga ideal e candidate-se</p>
+<div class="min-h-[calc(100vh-56px)] bg-neutral-50">
 
-  <div class="flex gap-2.5 mb-6">
-    <div class="flex-1 relative">
-      <ng-icon name="heroMagnifyingGlass" size="16px" class="text-neutral-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-      <input [(ngModel)]="searchTerm" (keyup.enter)="load()" placeholder="Buscar por título ou requisito..."
-        class="w-full pl-9 pr-3.5 py-2.5 border border-neutral-300 rounded-lg text-sm text-neutral-950 placeholder:text-neutral-400
-               focus:outline-none focus:ring-2 focus:ring-[#2241c8] focus:border-transparent">
+  <!-- Hero Section -->
+  <div class="bg-gradient-to-b from-indigo-50 to-neutral-50 px-4 py-12 md:py-16">
+    <div class="max-w-3xl mx-auto text-center">
+      <h1 class="text-neutral-950 text-3xl md:text-4xl font-bold mb-3">Encontre sua próxima oportunidade</h1>
+      <p class="text-neutral-500 text-base mb-8">
+        @if (openCount()) {
+          <strong class="text-neutral-950">{{ openCount() }}</strong> {{ openCount() === 1 ? 'vaga aberta' : 'vagas abertas' }} esperando por você
+        } @else {
+          Nenhuma vaga disponível no momento
+        }
+      </p>
+
+      <div class="flex gap-2.5 max-w-lg mx-auto">
+        <div class="flex-1 relative">
+          <label for="hero-search" class="sr-only">Buscar vagas</label>
+          <ng-icon name="heroMagnifyingGlass" size="18px" class="text-neutral-400 absolute left-4 top-1/2 -translate-y-1/2" />
+          <input id="hero-search" [(ngModel)]="searchTerm" (keyup.enter)="load()"
+            placeholder="Buscar por cargo, skill ou área..."
+            class="w-full pl-11 pr-4 py-3 bg-white border border-neutral-200 rounded-xl text-sm text-neutral-950 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-[#2241c8] focus:border-transparent shadow-sm">
+        </div>
+        <select [(ngModel)]="statusFilter" (change)="load()"
+          class="px-4 py-3 bg-white border border-neutral-200 rounded-xl text-sm text-neutral-950 shadow-sm focus:outline-none focus:ring-2 focus:ring-[#2241c8]">
+          <option value="OPEN">Abertas</option>
+          <option value="">Todas</option>
+          <option value="CLOSED">Encerradas</option>
+        </select>
+      </div>
     </div>
-    <select [(ngModel)]="statusFilter" (change)="load()"
-      class="px-3.5 py-2.5 border border-neutral-300 rounded-lg text-sm text-neutral-950 bg-white">
-      <option value="">Todos os Status</option>
-      <option value="OPEN">OPEN</option>
-      <option value="CLOSED">CLOSED</option>
-    </select>
   </div>
 
-  @if (loading()) {
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-      @for (i of [1,2,3,4]; track i) {
-        <div class="border border-neutral-200 rounded-xl p-4.5 animate-pulse">
-          <div class="h-4 bg-neutral-200 rounded w-3/4 mb-3"></div>
-          <div class="h-3 bg-neutral-100 rounded w-full mb-2"></div>
-          <div class="h-3 bg-neutral-100 rounded w-1/2"></div>
-        </div>
-      }
-    </div>
-  } @else if (error()) {
-    <div class="text-center py-16">
-      <p class="text-neutral-500 mb-4">{{ error() }}</p>
-      <button (click)="load()" class="bg-[#2241c8] text-white font-semibold px-6 py-2.5 rounded-lg text-sm">Tentar novamente</button>
-    </div>
-  } @else if (vacancies().length === 0) {
-    <div class="text-center py-16">
-      <ng-icon name="heroInbox" size="48px" class="text-neutral-300 mb-4 block mx-auto" />
-      <h3 class="text-neutral-950 font-bold mb-2">Nenhuma vaga encontrada</h3>
-      <p class="text-neutral-500 text-sm">Tente ajustar os filtros ou buscar por outro termo.</p>
-    </div>
-  } @else {
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-      @for (vacancy of vacancies(); track vacancy.id) {
-        <a [routerLink]="['/vacancies', vacancy.id]"
-           class="border border-neutral-200 rounded-xl p-4.5 hover:border-[#2d53fa] transition no-underline block cursor-pointer">
-          <strong class="text-neutral-950 font-semibold text-[15px] block mb-2">{{ vacancy.title }}</strong>
-          <p class="text-neutral-500 text-sm mb-2.5 leading-relaxed whitespace-pre-line line-clamp-3">{{ vacancy.description }}</p>
-          <div class="flex flex-wrap gap-1.5 mb-3.5">
-            @for (req of vacancy.requirements; track req.id) {
-              <span class="inline-flex items-center rounded-md bg-[#2241c8]/10 px-2 py-1 text-xs font-medium text-[#2241c8] ring-1 ring-[#2241c8]/30">{{ req.description }}</span>
-            }
+  <!-- Content -->
+  <div class="max-w-5xl mx-auto px-4 pb-12">
+
+    @if (loading()) {
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+        @for (i of [1,2,3,4]; track i) {
+          <div class="bg-white rounded-xl shadow-sm p-5 animate-pulse">
+            <div class="flex justify-between items-start mb-3">
+              <div class="h-5 bg-neutral-200 rounded w-2/3"></div>
+              <div class="h-5 bg-neutral-200 rounded-full w-16"></div>
+            </div>
+            <div class="h-4 bg-neutral-100 rounded w-full mb-2"></div>
+            <div class="h-4 bg-neutral-100 rounded w-3/4 mb-3"></div>
+            <div class="flex gap-1.5 mb-3">
+              <div class="h-5 bg-neutral-100 rounded-md w-14"></div>
+              <div class="h-5 bg-neutral-100 rounded-md w-20"></div>
+            </div>
+            <div class="flex justify-between items-center">
+              <div class="h-3 bg-neutral-100 rounded w-20"></div>
+              <div class="h-8 bg-neutral-200 rounded-lg w-28"></div>
+            </div>
           </div>
-          <span class="text-neutral-400 text-xs flex items-center gap-1">
-            <ng-icon name="heroCalendarDays" size="14px" />
-            {{ vacancy.createdAt | date:'dd/MM/yyyy' }}
-          </span>
-        </a>
-      }
-    </div>
-  }
+        }
+      </div>
+    }
+
+    @else if (error()) {
+      <div class="text-center py-16">
+        <p class="text-neutral-500 mb-4">{{ error() }}</p>
+        <button (click)="load()"
+          class="bg-[#2241c8] text-white font-semibold px-6 py-2.5 rounded-lg text-sm hover:bg-[#2241c8]/90 transition">
+          Tentar novamente
+        </button>
+      </div>
+    }
+
+    @else if (vacancies().length === 0) {
+      <div class="text-center py-16">
+        <div class="w-16 h-16 bg-neutral-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <ng-icon name="heroInbox" size="28px" class="text-neutral-400" />
+        </div>
+        <h3 class="text-neutral-950 font-bold mb-2">Nenhuma vaga encontrada</h3>
+        <p class="text-neutral-500 text-sm">Tente ajustar os filtros ou buscar por outro termo</p>
+      </div>
+    }
+
+    @else {
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+        @for (vacancy of vacancies(); track vacancy.id) {
+          <a [routerLink]="['/vacancies', vacancy.id]"
+            class="bg-white rounded-xl shadow-sm p-5 no-underline block cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 border border-transparent hover:border-[#2241c8]/20"
+            [class.opacity-50]="vacancy.status === 'CLOSED'">
+
+            <div class="flex items-start justify-between gap-3 mb-2.5">
+              <strong class="text-neutral-950 text-[15px] leading-snug">{{ vacancy.title }}</strong>
+              @if (vacancy.status === 'OPEN' && isNew(vacancy.createdAt)) {
+                <span class="inline-flex items-center rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-semibold text-amber-700 ring-1 ring-amber-600/20 shrink-0">
+                  Novo
+                </span>
+              }
+            </div>
+
+            <p class="text-neutral-500 text-sm mb-3 leading-relaxed line-clamp-2 whitespace-pre-line">{{ vacancy.description }}</p>
+
+            <div class="flex flex-wrap gap-1.5 mb-3.5">
+              @for (req of vacancy.requirements; track req.id) {
+                <span class="inline-flex items-center rounded-md bg-[#2241c8]/10 px-2 py-0.5 text-xs font-medium text-[#2241c8] ring-1 ring-[#2241c8]/30">
+                  {{ req.description }}
+                </span>
+              }
+            </div>
+
+            <div class="flex items-center justify-between">
+              <span class="text-neutral-400 text-xs flex items-center gap-1">
+                <ng-icon name="heroCalendarDays" size="14px" />
+                {{ vacancy.createdAt | date:'dd/MM/yyyy' }}
+              </span>
+
+              @if (vacancy.status === 'OPEN' && !appliedIds().has(vacancy.id)) {
+                <button (click)="apply(vacancy.id, $event)" [disabled]="applyingId() === vacancy.id"
+                  class="bg-[#2241c8] text-white border-none rounded-lg px-4 py-2 text-xs font-semibold cursor-pointer hover:bg-[#2241c8]/90 disabled:opacity-50 transition inline-flex items-center gap-1">
+                  @if (applyingId() === vacancy.id) {
+                    <span class="inline-block w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                    Enviando...
+                  } @else {
+                    <ng-icon name="heroPaperAirplane" size="14px" />
+                    Candidatar-se
+                  }
+                </button>
+              }               @else if (appliedIds().has(vacancy.id)) {
+                <span class="inline-flex items-center gap-1 text-green-700 bg-green-50 rounded-lg px-3 py-1.5 text-xs font-semibold">
+                  <ng-icon name="heroCheckCircle" size="14px" />
+                  Candidatura realizada
+                </span>
+              } @else if (vacancy.status === 'CLOSED') {
+                <span class="text-neutral-400 text-xs font-medium">Encerrada</span>
+              }
+            </div>
+          </a>
+        }
+      </div>
+    }
+
+  </div>
 </div>

@@ -1,4 +1,4 @@
-import { Component, inject, signal, ChangeDetectionStrategy, DestroyRef } from '@angular/core';
+import { Component, inject, signal, computed, ChangeDetectionStrategy, DestroyRef } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { toSignal, toObservable } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
@@ -41,7 +41,25 @@ export class VacancyList {
     { initialValue: [] as VacancyResponse[] }
   );
 
+  constructor() {
+    this.applicationService.listMy().pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(apps => {
+      this.appliedIds.set(new Set(apps.map(a => a.vacancy.id)));
+    });
+  }
+
   protected readonly appliedIds = signal<Set<number>>(new Set());
+  protected readonly applyingId = signal<number | null>(null);
+
+  protected readonly openCount = computed(() =>
+    this.vacancies().filter(v => v.status === 'OPEN').length
+  );
+
+  protected readonly isNew = (createdAt: string): boolean => {
+    const diff = Date.now() - new Date(createdAt).getTime();
+    return diff < 7 * 24 * 60 * 60 * 1000;
+  };
 
   protected load(): void {
     const params: { status?: VacancyStatus; requirement?: string } = {};
@@ -50,17 +68,22 @@ export class VacancyList {
     this.filters.set(params);
   }
 
-  protected apply(vacancyId: number): void {
+  protected apply(vacancyId: number, event: Event): void {
+    event.stopPropagation();
+    event.preventDefault();
+    this.applyingId.set(vacancyId);
     this.applicationService.apply(vacancyId).pipe(
       takeUntilDestroyed(this.destroyRef)
     ).subscribe({
       next: () => {
         this.appliedIds.update(ids => { const s = new Set(ids); s.add(vacancyId); return s; });
+        this.applyingId.set(null);
       },
       error: (err: HttpErrorResponse) => {
         if (err.status === 409) {
           this.appliedIds.update(ids => { const s = new Set(ids); s.add(vacancyId); return s; });
         }
+        this.applyingId.set(null);
       }
     });
   }

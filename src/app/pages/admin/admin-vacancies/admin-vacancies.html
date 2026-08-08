@@ -1,124 +1,185 @@
-<div class="bg-white px-6 py-7">
-  <div class="flex items-start justify-between mb-6 flex-wrap gap-3">
-    <div>
-      <h2 class="text-neutral-950 text-xl font-bold mb-1">Gerenciar Vagas</h2>
-      <p class="text-neutral-500 text-sm">Crie, edite e controle o status das vagas</p>
-    </div>
-    <a routerLink="/admin/vacancies/new" class="bg-[#2241c8] text-white font-semibold px-6 py-2.5 rounded-lg text-sm no-underline inline-flex items-center gap-1.5">
-      <ng-icon name="heroPlus" size="16px" />
-      Nova Vaga
-    </a>
-  </div>
+<div class="min-h-[calc(100vh-56px)] bg-neutral-50 px-4 py-8 md:py-10">
+  <div class="max-w-5xl mx-auto">
 
-  <div class="flex gap-2.5 mb-6">
-    <div class="flex-1 relative">
-      <label for="admin-search" class="sr-only">Buscar vagas</label>
-      <ng-icon name="heroMagnifyingGlass" size="16px" class="text-neutral-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-      <input id="admin-search" [(ngModel)]="searchTerm" (keyup.enter)="load()" placeholder="Buscar por título ou requisito..."
-        class="w-full pl-9 pr-3.5 py-2.5 border border-neutral-300 rounded-lg text-sm text-neutral-950 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-[#2241c8] focus:border-transparent">
-    </div>
-    <div>
-      <label for="admin-status" class="sr-only">Filtrar por status</label>
-      <select id="admin-status" [(ngModel)]="statusFilter" (change)="load()" class="px-3.5 py-2.5 border border-neutral-300 rounded-lg text-sm text-neutral-950 bg-white">
-        <option value="">Todos os Status</option>
-        <option value="OPEN">OPEN</option>
-        <option value="DRAFT">DRAFT</option>
-        <option value="CLOSED">CLOSED</option>
-      </select>
-    </div>
-  </div>
-
-  @if (loading()) {
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-      @for (i of [1,2,3,4]; track i) {
-        <div class="border border-neutral-200 rounded-xl p-4.5 animate-pulse h-36"></div>
-      }
-    </div>
-  } @else if (error()) {
-    <div class="text-center py-16">
-      <p class="text-neutral-500 mb-4">{{ error() }}</p>
-      <button (click)="load()" class="bg-[#2241c8] text-white font-semibold px-6 py-2.5 rounded-lg text-sm">Tentar novamente</button>
-    </div>
-  } @else if (vacancies().length === 0) {
-    <div class="text-center py-16">
-      <div class="text-4xl mb-4">
-        <ng-icon name="heroInbox" size="48px" class="text-neutral-300" />
+    <!-- Header -->
+    <div class="flex items-start justify-between mb-8 flex-wrap gap-3">
+      <div>
+        <h2 class="text-neutral-950 text-2xl font-bold mb-1">Gerenciar Vagas</h2>
+        <p class="text-neutral-500 text-sm">Crie, edite e controle o status das vagas</p>
       </div>
-      <h3 class="text-neutral-950 font-bold mb-2">Nenhuma vaga cadastrada</h3>
-      <p class="text-neutral-500 text-sm mb-5">Crie sua primeira vaga para começar</p>
-      <a routerLink="/admin/vacancies/new" class="bg-[#2241c8] text-white font-semibold px-6 py-2.5 rounded-lg text-sm no-underline inline-block">Nova Vaga</a>
+      <a routerLink="/admin/vacancies/new"
+        class="bg-[#2241c8] text-white font-semibold px-5 py-2.5 rounded-lg text-sm no-underline inline-flex items-center gap-1.5 hover:bg-[#2241c8]/90 transition shadow-sm">
+        <ng-icon name="heroPlus" size="16px" />
+        Nova Vaga
+      </a>
     </div>
-  } @else {
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-      @for (v of vacancies(); track v.id) {
-        <div class="border border-neutral-200 rounded-xl p-4.5 hover:border-[#2d53fa] transition" [class.opacity-60]="v.status === 'CLOSED'">
-          <div class="flex items-start justify-between mb-2.5">
-            <strong class="text-neutral-950 text-[15px]">{{ v.title }}</strong>
-            <app-status-badge [status]="v.status" />
+
+    <!-- Stats Summary -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
+      <div class="bg-white rounded-xl border border-neutral-200 p-4">
+        <span class="text-neutral-400 text-xs font-medium uppercase">Total</span>
+        <p class="text-neutral-950 text-2xl font-bold mt-1">{{ totalCount() }}</p>
+      </div>
+      <div class="bg-white rounded-xl border border-green-200 p-4">
+        <span class="text-green-600 text-xs font-medium uppercase">Abertas</span>
+        <p class="text-green-700 text-2xl font-bold mt-1">{{ openCount() }}</p>
+      </div>
+      <div class="bg-white rounded-xl border border-amber-200 p-4">
+        <span class="text-amber-600 text-xs font-medium uppercase">Rascunhos</span>
+        <p class="text-amber-700 text-2xl font-bold mt-1">{{ draftCount() }}</p>
+      </div>
+      <div class="bg-white rounded-xl border border-red-200 p-4">
+        <span class="text-red-600 text-xs font-medium uppercase">Encerradas</span>
+        <p class="text-red-700 text-2xl font-bold mt-1">{{ closedCount() }}</p>
+      </div>
+    </div>
+
+    <!-- Search & Filter -->
+    <div class="flex gap-2.5 mb-4">
+      <div class="flex-1 relative">
+        <label for="admin-search" class="sr-only">Buscar vagas</label>
+        <ng-icon name="heroMagnifyingGlass" size="16px" class="text-neutral-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+        <input id="admin-search" [(ngModel)]="searchTerm" (keyup.enter)="load()" placeholder="Buscar por título ou requisito..."
+          class="w-full pl-9 pr-3.5 py-2.5 bg-white border border-neutral-200 rounded-lg text-sm text-neutral-950 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-[#2241c8] focus:border-transparent shadow-sm">
+      </div>
+      <div>
+        <label for="admin-status" class="sr-only">Filtrar por status</label>
+        <select id="admin-status" [(ngModel)]="statusFilter" (change)="load()"
+          class="px-3.5 py-2.5 bg-white border border-neutral-200 rounded-lg text-sm text-neutral-950 shadow-sm focus:outline-none focus:ring-2 focus:ring-[#2241c8]">
+          <option value="">Todos os Status</option>
+          <option value="OPEN">Abertas</option>
+          <option value="DRAFT">Rascunhos</option>
+          <option value="CLOSED">Encerradas</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Loading -->
+    @if (loading()) {
+      <div class="bg-white rounded-xl border border-neutral-200 shadow-sm overflow-hidden">
+        @for (i of [1,2,3,4,5]; track i) {
+          <div class="flex items-center gap-4 px-5 py-4 border-b border-neutral-100 last:border-0 animate-pulse">
+            <div class="h-6 w-20 bg-neutral-200 rounded-full"></div>
+            <div class="flex-1 h-4 bg-neutral-100 rounded"></div>
+            <div class="h-5 w-28 bg-neutral-100 rounded-full hidden md:block"></div>
+            <div class="h-4 w-16 bg-neutral-100 rounded hidden md:block"></div>
+            <div class="h-8 w-24 bg-neutral-200 rounded-lg"></div>
           </div>
-          <p class="text-neutral-500 text-sm mb-2.5 leading-relaxed line-clamp-2 whitespace-pre-line">{{ v.description }}</p>
-          <div class="flex flex-wrap gap-1.5 mb-3.5">
-            @for (req of v.requirements; track req.id) {
-              <span class="inline-flex items-center rounded-md bg-[#2241c8]/10 px-2 py-1 text-xs font-medium text-[#2241c8] ring-1 ring-[#2241c8]/30">{{ req.description }}</span>
-            }
-          </div>
-          <div class="flex items-center justify-between">
-            <span class="text-neutral-400 text-xs flex items-center gap-1">
+        }
+      </div>
+    }
+
+    <!-- Error -->
+    @else if (error()) {
+      <div class="bg-white rounded-xl border border-neutral-200 shadow-sm text-center py-16">
+        <p class="text-neutral-500 mb-4">{{ error() }}</p>
+        <button (click)="load()"
+          class="bg-[#2241c8] text-white font-semibold px-6 py-2.5 rounded-lg text-sm">Tentar novamente</button>
+      </div>
+    }
+
+    <!-- Empty -->
+    @else if (vacancies().length === 0) {
+      <div class="bg-white rounded-xl border border-neutral-200 shadow-sm text-center py-16">
+        <div class="text-4xl mb-4">
+          <ng-icon name="heroInbox" size="48px" class="text-neutral-300" />
+        </div>
+        <h3 class="text-neutral-950 font-bold mb-2">Nenhuma vaga cadastrada</h3>
+        <p class="text-neutral-500 text-sm mb-5">Crie sua primeira vaga para começar</p>
+        <a routerLink="/admin/vacancies/new"
+          class="bg-[#2241c8] text-white font-semibold px-6 py-2.5 rounded-lg text-sm no-underline inline-block">Nova Vaga</a>
+      </div>
+    }
+
+    <!-- Table -->
+    @else {
+      <div class="bg-white rounded-xl border border-neutral-200 shadow-sm overflow-hidden">
+        <!-- Table Header -->
+        <div class="hidden md:grid grid-cols-[auto_1fr_auto_auto] gap-4 px-5 py-3 bg-neutral-50 border-b border-neutral-200 text-neutral-500 text-xs font-semibold uppercase tracking-wider">
+          <span>Status</span>
+          <span>Vaga</span>
+          <span>Data</span>
+          <span>Ações</span>
+        </div>
+
+        <!-- Table Rows -->
+        @for (v of vacancies(); track v.id) {
+          <div class="flex flex-col md:grid md:grid-cols-[auto_1fr_auto_auto] md:gap-4 md:items-center px-5 py-4 border-b border-neutral-100 last:border-0 hover:bg-neutral-50 transition-colors"
+            [class.opacity-50]="v.status === 'CLOSED'">
+            <div class="flex items-center gap-3 md:contents">
+              <app-status-badge [status]="v.status" />
+              <span class="md:hidden text-neutral-400 text-xs ml-auto">{{ v.createdAt | date:'dd/MM/yyyy' }}</span>
+            </div>
+            <div class="mt-2 md:mt-0">
+              <strong class="text-neutral-950 text-sm">{{ v.title }}</strong>
+              @if (v.requirements.length) {
+                <div class="flex flex-wrap gap-1 mt-1">
+                  @for (req of v.requirements; track req.id) {
+                    <span class="inline-flex items-center rounded-md bg-[#2241c8]/10 px-2 py-0.5 text-xs font-medium text-[#2241c8] ring-1 ring-[#2241c8]/30">{{ req.description }}</span>
+                  }
+                </div>
+              }
+            </div>
+            <div class="hidden md:flex md:items-center md:gap-1 text-neutral-400 text-xs">
               <ng-icon name="heroCalendarDays" size="14px" />
               {{ v.createdAt | date:'dd/MM/yyyy' }}
-            </span>
-            <div class="flex gap-1.5">
+            </div>
+            <div class="flex gap-1.5 mt-2.5 md:mt-0 md:justify-end">
               @if (v.status === 'OPEN') {
                 <a [routerLink]="['/admin/vacancies', v.id, 'applications']"
-                  class="border border-[#2241c8] text-[#2241c8] rounded-md px-3 py-1.5 text-xs font-semibold no-underline hover:bg-indigo-50 inline-flex items-center gap-1">
+                  class="border border-[#2241c8] text-[#2241c8] rounded-md px-3 py-1.5 text-xs font-semibold no-underline hover:bg-indigo-50 transition inline-flex items-center gap-1">
                   <ng-icon name="heroClipboardDocumentList" size="14px" />
-                  Candidaturas
+                  <span class="hidden sm:inline">Candidaturas</span>
                 </a>
                 <button (click)="confirmClose(v.id)"
-                  class="bg-red-600 text-white border-none rounded-md px-3 py-1.5 text-xs font-semibold cursor-pointer hover:bg-red-700">
-                  Encerrar
+                  class="bg-red-600 text-white border-none rounded-md px-3 py-1.5 text-xs font-semibold cursor-pointer hover:bg-red-700 transition inline-flex items-center gap-1">
+                  <ng-icon name="heroArchiveBox" size="14px" />
+                  <span class="hidden sm:inline">Encerrar</span>
                 </button>
               } @else if (v.status === 'DRAFT') {
                 <button (click)="confirmDelete(v.id)"
-                  class="bg-red-600 text-white border-none rounded-md px-3 py-1.5 text-xs font-semibold cursor-pointer hover:bg-red-700">
-                  Excluir
+                  class="bg-red-600 text-white border-none rounded-md px-3 py-1.5 text-xs font-semibold cursor-pointer hover:bg-red-700 transition inline-flex items-center gap-1">
+                  <ng-icon name="heroTrash" size="14px" />
+                  <span class="hidden sm:inline">Excluir</span>
                 </button>
                 <a [routerLink]="['/admin/vacancies', v.id]"
-                  class="border border-neutral-300 text-neutral-700 rounded-md px-3 py-1.5 text-xs font-medium no-underline hover:bg-neutral-50 inline-flex items-center gap-1">
+                  class="border border-neutral-300 text-neutral-700 rounded-md px-3 py-1.5 text-xs font-medium no-underline hover:bg-neutral-100 transition inline-flex items-center gap-1">
                   <ng-icon name="heroPencilSquare" size="14px" />
-                  Editar
+                  <span class="hidden sm:inline">Editar</span>
                 </a>
                 <button (click)="publish(v.id)"
                   [class.opacity-50]="publishingId() === v.id"
                   [disabled]="publishingId() === v.id"
-                  class="bg-[#2241c8] text-white border-none rounded-md px-3 py-1.5 text-xs font-semibold cursor-pointer hover:bg-[#2241c8]/90 disabled:cursor-not-allowed">
-                  Publicar
+                  class="bg-[#2241c8] text-white border-none rounded-md px-3 py-1.5 text-xs font-semibold cursor-pointer hover:bg-[#2241c8]/90 disabled:cursor-not-allowed transition inline-flex items-center gap-1">
+                  <ng-icon name="heroMegaphone" size="14px" />
+                  <span class="hidden sm:inline">Publicar</span>
                 </button>
               }
             </div>
           </div>
-        </div>
-      }
-    </div>
-  }
+        }
+      </div>
+    }
 
-  <app-confirm-modal
-    [open]="closingId() !== null"
-    title="Encerrar vaga?"
-    message="Ao encerrar esta vaga, todas as candidaturas PENDENTES e EM ANÁLISE serão automaticamente reprovadas. Candidaturas já APROVADAS ou REPROVADAS não serão alteradas."
-    confirmLabel="Sim, Encerrar Vaga"
-    variant="danger"
-    [loading]="closing()"
-    (confirm)="closeVacancy()"
-    (cancel)="closingId.set(null)" />
-
-  <app-confirm-modal
-    [open]="deletingId() !== null"
-    title="Excluir vaga?"
-    message="Esta ação é irreversível. A vaga em rascunho será removida permanentemente."
-    confirmLabel="Sim, Excluir"
-    variant="danger"
-    [loading]="deleting()"
-    (confirm)="deleteVacancy()"
-    (cancel)="deletingId.set(null)" />
+  </div>
 </div>
+
+<app-confirm-modal
+  [open]="closingId() !== null"
+  title="Encerrar vaga?"
+  message="Ao encerrar esta vaga, todas as candidaturas PENDENTES e EM ANÁLISE serão automaticamente reprovadas. Candidaturas já APROVADAS ou REPROVADAS não serão alteradas."
+  confirmLabel="Sim, Encerrar Vaga"
+  variant="danger"
+  [loading]="closing()"
+  (confirm)="closeVacancy()"
+  (cancel)="closingId.set(null)" />
+
+<app-confirm-modal
+  [open]="deletingId() !== null"
+  title="Excluir vaga?"
+  message="Esta ação é irreversível. A vaga em rascunho será removida permanentemente."
+  confirmLabel="Sim, Excluir"
+  variant="danger"
+  [loading]="deleting()"
+  (confirm)="deleteVacancy()"
+  (cancel)="deletingId.set(null)" />

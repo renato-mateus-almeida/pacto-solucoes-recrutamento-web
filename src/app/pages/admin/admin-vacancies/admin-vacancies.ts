@@ -1,9 +1,11 @@
 import { Component, inject, signal, ChangeDetectionStrategy, DestroyRef } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { toSignal, toObservable } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { NgIcon } from '@ng-icons/core';
+import { switchMap, tap, catchError, of } from 'rxjs';
 import { VacancyService } from '../../../core/services/vacancy';
-import { VacancyResponse, VacancyStatus } from '../../../core/models/vacancy.model';
+import { VacancyStatus } from '../../../core/models/vacancy.model';
 import { StatusBadge } from '../../../shared/components/status-badge/status-badge';
 import { ConfirmModal } from '../../../shared/components/confirm-modal/confirm-modal';
 import { DatePipe } from '@angular/common';
@@ -20,32 +22,33 @@ export class AdminVacancies {
   private readonly vacancyService = inject(VacancyService);
   private readonly destroyRef = inject(DestroyRef);
 
-  protected readonly vacancies = signal<VacancyResponse[]>([]);
+  protected searchTerm = '';
+  protected statusFilter: VacancyStatus | '' = '';
+
   protected readonly loading = signal(true);
   protected readonly error = signal<string | null>(null);
 
-  protected searchTerm = '';
-  protected statusFilter: VacancyStatus | '' = '';
+  private readonly filters = signal<{ status?: VacancyStatus; requirement?: string }>({});
+
+  readonly vacancies = toSignal(
+    toObservable(this.filters).pipe(
+      tap(() => { this.loading.set(true); this.error.set(null); }),
+      switchMap(p => this.vacancyService.list(p)),
+      tap(() => this.loading.set(false)),
+      catchError(() => { this.error.set('Erro ao carregar vagas'); this.loading.set(false); return of([]); })
+    ),
+    { initialValue: [] as any[] }
+  );
 
   protected closingId = signal<number | null>(null);
   protected closing = signal(false);
   protected publishingId = signal<number | null>(null);
 
-  constructor() { this.load(); }
-
   protected load(): void {
-    this.loading.set(true);
-    this.error.set(null);
     const params: { status?: VacancyStatus; requirement?: string } = {};
     if (this.statusFilter) params.status = this.statusFilter;
     if (this.searchTerm) params.requirement = this.searchTerm;
-
-    this.vacancyService.list(params).pipe(
-      takeUntilDestroyed(this.destroyRef)
-    ).subscribe({
-      next: (data) => { this.vacancies.set(data); this.loading.set(false); },
-      error: () => { this.error.set('Erro ao carregar vagas'); this.loading.set(false); }
-    });
+    this.filters.set(params);
   }
 
   protected confirmClose(id: number): void { this.closingId.set(id); }

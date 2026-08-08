@@ -1,6 +1,7 @@
-import { Component, inject, signal, ChangeDetectionStrategy, OnInit, DestroyRef } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Component, inject, signal, ChangeDetectionStrategy, DestroyRef, effect } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { rxResource } from '@angular/core/rxjs-interop';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { NgIcon } from '@ng-icons/core';
 import { VacancyService } from '../../../core/services/vacancy';
@@ -14,7 +15,7 @@ import { HttpErrorResponse } from '@angular/common/http';
   styleUrl: './admin-vacancy-form.css',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class AdminVacancyForm implements OnInit {
+export class AdminVacancyForm {
   private readonly fb = inject(FormBuilder).nonNullable;
   private readonly vacancyService = inject(VacancyService);
   private readonly route = inject(ActivatedRoute);
@@ -29,19 +30,28 @@ export class AdminVacancyForm implements OnInit {
 
   protected readonly requirements = signal<string[]>([]);
   protected readonly newRequirement = signal('');
-  protected readonly loading = signal(false);
   protected readonly submitting = signal(false);
   protected readonly error = signal<string | null>(null);
   protected readonly isEditing = signal(false);
   private editingId: number | null = null;
 
-  ngOnInit(): void {
+  constructor() {
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
       this.isEditing.set(true);
       this.editingId = Number(id);
+    }
+  }
+
+  readonly loading = signal(false);
+
+  ngOnInit(): void {
+    const id = this.route.snapshot.paramMap.get('id');
+    if (id) {
       this.loading.set(true);
-      this.vacancyService.getById(this.editingId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      this.vacancyService.getById(Number(id)).pipe(
+        takeUntilDestroyed(this.destroyRef)
+      ).subscribe({
         next: (v) => {
           this.form.patchValue({ title: v.title, description: v.description ?? '', status: v.status });
           this.requirements.set(v.requirements.map(r => r.description));

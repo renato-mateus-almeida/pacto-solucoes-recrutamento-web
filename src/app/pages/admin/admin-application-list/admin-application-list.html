@@ -4,15 +4,15 @@
     Voltar para Gerenciar Vagas
   </a>
 
-  @if (vacancyError()) {
+  @if (!vacancy()) {
     <div class="text-center py-16">
       <div class="text-4xl mb-4">
         <ng-icon name="heroInbox" size="48px" class="text-neutral-300" />
       </div>
-      <p class="text-neutral-500">{{ vacancyError() }}</p>
+      <p class="text-neutral-500">Carregando...</p>
     </div>
   } @else {
-    @if (loadingVacancy()) {
+    @if (!vacancy()) {
       <div class="animate-pulse mb-6">
         <div class="h-6 bg-neutral-200 rounded w-1/3 mb-2"></div>
         <div class="h-4 bg-neutral-100 rounded w-2/3"></div>
@@ -59,16 +59,11 @@
         </strong>
       </div>
 
-      @if (loading()) {
+      @if (!applications().length) {
         <div class="space-y-3">
           @for (i of [1,2,3]; track i) {
             <div class="border border-neutral-200 rounded-xl p-4 animate-pulse h-16"></div>
           }
-        </div>
-      } @else if (error()) {
-        <div class="text-center py-12">
-          <p class="text-neutral-500 mb-4">{{ error() }}</p>
-          <button (click)="loadApplications()" class="bg-[#2241c8] text-white font-semibold px-6 py-2.5 rounded-lg text-sm">Tentar novamente</button>
         </div>
       } @else if (filtered().length === 0) {
         <div class="text-center py-16">

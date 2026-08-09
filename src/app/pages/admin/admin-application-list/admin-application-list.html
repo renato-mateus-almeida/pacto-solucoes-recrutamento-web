@@ -1,99 +1,235 @@
-<div class="bg-white px-6 py-7">
-  <a [routerLink]="['/admin/vacancies']" class="text-neutral-500 text-sm no-underline inline-flex items-center gap-1 mb-5 hover:text-neutral-700">
-    <ng-icon name="heroArrowLeft" size="14px" />
-    Voltar para Gerenciar Vagas
-  </a>
+<div class="min-h-[calc(100vh-56px)] bg-neutral-50 px-4 py-8 md:py-10">
+  <div class="max-w-5xl mx-auto">
 
-  @if (!vacancy()) {
-    <div class="text-center py-16">
-      <div class="text-4xl mb-4">
-        <ng-icon name="heroInbox" size="48px" class="text-neutral-300" />
+    <!-- Breadcrumb -->
+    <a [routerLink]="['/admin/vacancies']"
+      class="text-neutral-500 text-sm no-underline inline-flex items-center gap-1 mb-5 hover:text-neutral-700 transition-colors">
+      <ng-icon name="heroArrowLeft" size="14px" />
+      Voltar para Gerenciar Vagas
+    </a>
+
+    <!-- Error -->
+    @if (error()) {
+      <div class="bg-white rounded-xl border border-neutral-200 shadow-sm text-center py-16">
+        <div class="text-4xl mb-4">
+          <ng-icon name="heroExclamationTriangle" size="48px" class="text-red-300" />
+        </div>
+        <h3 class="text-neutral-950 font-bold mb-2">Erro ao carregar</h3>
+        <p class="text-neutral-500 text-sm mb-5">{{ error() }}</p>
+        <button (click)="loadAll()"
+          class="bg-[#2241c8] text-white font-semibold px-6 py-2.5 rounded-lg text-sm cursor-pointer border-none hover:bg-[#2241c8]/90 transition shadow-sm">
+          Tentar novamente
+        </button>
       </div>
-      <p class="text-neutral-500">Carregando...</p>
-    </div>
-  } @else {
-    @if (!vacancy()) {
-      <div class="animate-pulse mb-6">
-        <div class="h-6 bg-neutral-200 rounded w-1/3 mb-2"></div>
-        <div class="h-4 bg-neutral-100 rounded w-2/3"></div>
-      </div>
-    } @else if (vacancy(); as v) {
-      <div class="mb-6">
-        <h2 class="text-neutral-950 text-xl font-bold mb-1">{{ v.title }}</h2>
-        <div class="flex items-center gap-3 text-xs text-neutral-400">
-          <span class="flex items-center gap-1"><ng-icon name="heroCalendarDays" size="14px" />{{ v.createdAt | date:'dd/MM/yyyy' }}</span>
-          <app-status-badge [status]="v.status" />
+    }
+
+    <!-- Content (when no error) -->
+    @if (!error()) {
+      <!-- Header -->
+      @if (vacancy(); as v) {
+        <div class="mb-8">
+          <h2 class="text-neutral-950 text-2xl font-bold mb-2">{{ v.title }}</h2>
+          <div class="flex items-center gap-3 text-sm text-neutral-500">
+            <span class="flex items-center gap-1">
+              <ng-icon name="heroCalendarDays" size="14px" />
+              {{ v.createdAt | date:'dd/MM/yyyy' }}
+            </span>
+            <app-status-badge [status]="v.status" />
+          </div>
+        </div>
+      }
+
+      <!-- Stats / Filter Cards -->
+      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 mb-8">
+
+        <!-- Todos -->
+        <div (click)="setFilter('ALL')" role="button" tabindex="0"
+          (keydown.enter)="setFilter('ALL')" (keydown.space)="setFilter('ALL'); $event.preventDefault()"
+          class="bg-white rounded-xl border p-4 cursor-pointer transition-all"
+          [class.border-neutral-600]="activeFilter() === 'ALL'"
+          [class.bg-neutral-100]="activeFilter() === 'ALL'"
+          [class.shadow-sm]="activeFilter() === 'ALL'"
+          [class.border-neutral-200]="activeFilter() !== 'ALL'"
+          [class.hover:border-neutral-300]="activeFilter() !== 'ALL'">
+          <span class="text-xs font-medium uppercase"
+            [class.text-neutral-500]="activeFilter() === 'ALL'"
+            [class.text-neutral-400]="activeFilter() !== 'ALL'">Todos</span>
+          <p class="text-2xl font-bold mt-1"
+            [class.text-neutral-950]="activeFilter() === 'ALL'"
+            [class.text-neutral-700]="activeFilter() !== 'ALL'">{{ counts().all }}</p>
+        </div>
+
+        <!-- Pendentes -->
+        <div (click)="setFilter('PENDING')" role="button" tabindex="0"
+          (keydown.enter)="setFilter('PENDING')" (keydown.space)="setFilter('PENDING'); $event.preventDefault()"
+          class="bg-white rounded-xl border p-4 cursor-pointer transition-all"
+          [class.border-amber-600]="activeFilter() === 'PENDING'"
+          [class.bg-amber-50]="activeFilter() === 'PENDING'"
+          [class.shadow-sm]="activeFilter() === 'PENDING'"
+          [class.border-amber-200]="activeFilter() !== 'PENDING'"
+          [class.hover:border-neutral-300]="activeFilter() !== 'PENDING'">
+          <span class="text-xs font-medium uppercase"
+            [class.text-amber-600]="activeFilter() === 'PENDING'"
+            [class.text-neutral-400]="activeFilter() !== 'PENDING'">Pendentes</span>
+          <p class="text-2xl font-bold mt-1"
+            [class.text-amber-700]="activeFilter() === 'PENDING'"
+            [class.text-neutral-700]="activeFilter() !== 'PENDING'">{{ counts().pending }}</p>
+        </div>
+
+        <!-- Em Revisão -->
+        <div (click)="setFilter('IN_REVIEW')" role="button" tabindex="0"
+          (keydown.enter)="setFilter('IN_REVIEW')" (keydown.space)="setFilter('IN_REVIEW'); $event.preventDefault()"
+          class="bg-white rounded-xl border p-4 cursor-pointer transition-all"
+          [class.border-blue-600]="activeFilter() === 'IN_REVIEW'"
+          [class.bg-blue-50]="activeFilter() === 'IN_REVIEW'"
+          [class.shadow-sm]="activeFilter() === 'IN_REVIEW'"
+          [class.border-blue-200]="activeFilter() !== 'IN_REVIEW'"
+          [class.hover:border-neutral-300]="activeFilter() !== 'IN_REVIEW'">
+          <span class="text-xs font-medium uppercase"
+            [class.text-blue-600]="activeFilter() === 'IN_REVIEW'"
+            [class.text-neutral-400]="activeFilter() !== 'IN_REVIEW'">Em Revisão</span>
+          <p class="text-2xl font-bold mt-1"
+            [class.text-blue-700]="activeFilter() === 'IN_REVIEW'"
+            [class.text-neutral-700]="activeFilter() !== 'IN_REVIEW'">{{ counts().inReview }}</p>
+        </div>
+
+        <!-- Aprovados -->
+        <div (click)="setFilter('APPROVED')" role="button" tabindex="0"
+          (keydown.enter)="setFilter('APPROVED')" (keydown.space)="setFilter('APPROVED'); $event.preventDefault()"
+          class="bg-white rounded-xl border p-4 cursor-pointer transition-all"
+          [class.border-green-600]="activeFilter() === 'APPROVED'"
+          [class.bg-green-50]="activeFilter() === 'APPROVED'"
+          [class.shadow-sm]="activeFilter() === 'APPROVED'"
+          [class.border-green-200]="activeFilter() !== 'APPROVED'"
+          [class.hover:border-neutral-300]="activeFilter() !== 'APPROVED'">
+          <span class="text-xs font-medium uppercase"
+            [class.text-green-600]="activeFilter() === 'APPROVED'"
+            [class.text-neutral-400]="activeFilter() !== 'APPROVED'">Aprovados</span>
+          <p class="text-2xl font-bold mt-1"
+            [class.text-green-700]="activeFilter() === 'APPROVED'"
+            [class.text-neutral-700]="activeFilter() !== 'APPROVED'">{{ counts().approved }}</p>
+        </div>
+
+        <!-- Reprovados -->
+        <div (click)="setFilter('REJECTED')" role="button" tabindex="0"
+          (keydown.enter)="setFilter('REJECTED')" (keydown.space)="setFilter('REJECTED'); $event.preventDefault()"
+          class="bg-white rounded-xl border p-4 cursor-pointer transition-all"
+          [class.border-red-600]="activeFilter() === 'REJECTED'"
+          [class.bg-red-50]="activeFilter() === 'REJECTED'"
+          [class.shadow-sm]="activeFilter() === 'REJECTED'"
+          [class.border-red-200]="activeFilter() !== 'REJECTED'"
+          [class.hover:border-neutral-300]="activeFilter() !== 'REJECTED'">
+          <span class="text-xs font-medium uppercase"
+            [class.text-red-600]="activeFilter() === 'REJECTED'"
+            [class.text-neutral-400]="activeFilter() !== 'REJECTED'">Reprovados</span>
+          <p class="text-2xl font-bold mt-1"
+            [class.text-red-700]="activeFilter() === 'REJECTED'"
+            [class.text-neutral-700]="activeFilter() !== 'REJECTED'">{{ counts().rejected }}</p>
         </div>
       </div>
 
-      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2.5 mb-6">
-        @for (item of [
-          { key: 'ALL', label: 'Todos', color: 'text-indigo-700', count: counts().all },
-          { key: 'PENDING', label: 'Pendentes', color: 'text-amber-800', count: counts().pending },
-          { key: 'IN_REVIEW', label: 'Em Revisão', color: 'text-blue-800', count: counts().inReview },
-          { key: 'APPROVED', label: 'Aprovados', color: 'text-green-800', count: counts().approved },
-          { key: 'REJECTED', label: 'Reprovados', color: 'text-red-700', count: counts().rejected }
-        ]; track item.key) {
-          <div (click)="setFilter($any(item.key))" role="button" tabindex="0" (keydown.enter)="setFilter($any(item.key))"
-            class="text-center border-2 rounded-xl py-3 px-2 cursor-pointer transition"
-            [class.border-[#2241c8]]="activeFilter() === item.key && item.key === 'ALL'"
-            [class.bg-indigo-50]="activeFilter() === item.key && item.key === 'ALL'"
-            [class.border-amber-600]="activeFilter() === item.key && item.key === 'PENDING'"
-            [class.bg-amber-50]="activeFilter() === item.key && item.key === 'PENDING'"
-            [class.border-blue-600]="activeFilter() === item.key && item.key === 'IN_REVIEW'"
-            [class.bg-blue-50]="activeFilter() === item.key && item.key === 'IN_REVIEW'"
-            [class.border-green-600]="activeFilter() === item.key && item.key === 'APPROVED'"
-            [class.bg-green-50]="activeFilter() === item.key && item.key === 'APPROVED'"
-            [class.border-red-600]="activeFilter() === item.key && item.key === 'REJECTED'"
-            [class.bg-red-50]="activeFilter() === item.key && item.key === 'REJECTED'"
-            [class.border-neutral-200]="activeFilter() !== item.key">
-            <div class="text-[11px] uppercase font-semibold tracking-wide mb-1" [class]="item.color">{{ item.label }}</div>
-            <div class="text-2xl font-bold text-neutral-950">{{ item.count }}</div>
+      <!-- Loading -->
+      @if (loading()) {
+        <div class="bg-white rounded-xl border border-neutral-200 shadow-sm overflow-hidden">
+          <div class="hidden md:grid grid-cols-[1fr_auto_auto] gap-4 px-5 py-3 bg-neutral-50 border-b border-neutral-200 text-neutral-500 text-xs font-semibold uppercase tracking-wider">
+            <span>Candidato</span>
+            <span>Data</span>
+            <span>Status</span>
           </div>
-        }
-      </div>
-
-      <div class="text-neutral-500 text-sm mb-4">
-        Exibindo: <strong class="text-neutral-950">
-          {{ activeFilter() === 'ALL' ? 'Todos' : activeFilter() }} ({{ filtered().length }})
-        </strong>
-      </div>
-
-      @if (!applications().length) {
-        <div class="space-y-3">
-          @for (i of [1,2,3]; track i) {
-            <div class="border border-neutral-200 rounded-xl p-4 animate-pulse h-16"></div>
+          @for (i of [1,2,3,4,5]; track i) {
+            <div class="flex flex-col md:grid md:grid-cols-[1fr_auto_auto] md:gap-4 md:items-center px-5 py-4 border-b border-neutral-100 last:border-0 animate-pulse">
+              <div class="flex items-center gap-3">
+                <div class="h-10 w-10 rounded-full bg-neutral-200 shrink-0"></div>
+                <div class="flex-1">
+                  <div class="h-4 w-32 bg-neutral-200 rounded mb-2"></div>
+                  <div class="h-3 w-24 bg-neutral-100 rounded"></div>
+                </div>
+              </div>
+              <div class="hidden md:block">
+                <div class="h-4 w-20 bg-neutral-100 rounded"></div>
+              </div>
+              <div class="hidden md:flex md:justify-end">
+                <div class="h-6 w-24 bg-neutral-200 rounded-full"></div>
+              </div>
+              <div class="flex items-center justify-between mt-3 md:hidden">
+                <div class="h-4 w-16 bg-neutral-100 rounded"></div>
+                <div class="h-6 w-20 bg-neutral-200 rounded-full"></div>
+              </div>
+            </div>
           }
         </div>
-      } @else if (filtered().length === 0) {
-        <div class="text-center py-16">
+      }
+
+      <!-- Empty -->
+      @else if (applications().length === 0) {
+        <div class="bg-white rounded-xl border border-neutral-200 shadow-sm text-center py-16">
           <div class="text-4xl mb-4">
             <ng-icon name="heroInbox" size="48px" class="text-neutral-300" />
           </div>
-          <h4 class="text-neutral-950 font-bold mb-2">Nenhuma candidatura {{ activeFilter() !== 'ALL' ? activeFilter() : '' }}</h4>
+          <h3 class="text-neutral-950 font-bold mb-2">Nenhuma candidatura recebida</h3>
           <p class="text-neutral-500 text-sm">Nenhum candidato se inscreveu nesta vaga ainda.</p>
         </div>
-      } @else {
-        <div class="border border-neutral-200 rounded-xl overflow-hidden">
+      }
+
+      <!-- Filtered Empty -->
+      @else if (filtered().length === 0) {
+        <div class="bg-white rounded-xl border border-neutral-200 shadow-sm text-center py-16">
+          <div class="text-4xl mb-4">
+            <ng-icon name="heroInbox" size="48px" class="text-neutral-300" />
+          </div>
+          <h3 class="text-neutral-950 font-bold mb-2">Nenhuma candidatura encontrada</h3>
+          <p class="text-neutral-500 text-sm">Não há candidaturas com o status selecionado para esta vaga.</p>
+          @if (activeFilter() !== 'ALL') {
+            <button (click)="setFilter('ALL')"
+              class="text-[#2241c8] text-sm font-medium border-none bg-transparent cursor-pointer hover:underline mt-3">
+              Mostrar todas as candidaturas
+            </button>
+          }
+        </div>
+      }
+
+      <!-- Table -->
+      @else {
+        <div class="bg-white rounded-xl border border-neutral-200 shadow-sm overflow-hidden">
+          <!-- Table Header -->
+          <div class="hidden md:grid grid-cols-[1fr_auto_auto] gap-4 px-5 py-3 bg-neutral-50 border-b border-neutral-200 text-neutral-500 text-xs font-semibold uppercase tracking-wider">
+            <span>Candidato</span>
+            <span>Data</span>
+            <span>Status</span>
+          </div>
+
+          <!-- Table Rows -->
           @for (app of filtered(); track app.id) {
             <a [routerLink]="['/admin/vacancies', vacancyId, 'applications', app.id]"
-              class="flex items-center justify-between px-5 py-4 border-b border-neutral-100 last:border-b-0 no-underline text-inherit hover:bg-neutral-50 transition cursor-pointer">
-              <div class="min-w-0">
-                <strong class="text-neutral-950 text-sm">{{ app.candidate.name }}</strong>
-                <div class="text-neutral-500 text-xs mt-0.5">Candidatura #{{ app.id }} · {{ app.appliedAt | date:'dd/MM/yyyy' }}</div>
+              class="flex flex-col md:grid md:grid-cols-[1fr_auto_auto] md:gap-4 md:items-center px-5 py-4 border-b border-neutral-100 last:border-0 no-underline text-inherit hover:bg-neutral-50 transition-colors cursor-pointer">
+              <div class="flex items-center gap-3 min-w-0">
+                <div class="h-10 w-10 rounded-full bg-[#2241c8]/10 flex items-center justify-center shrink-0">
+                  <span class="text-[#2241c8] text-sm font-bold">{{ app.candidate.name.charAt(0).toUpperCase() }}</span>
+                </div>
+                <div class="min-w-0">
+                  <strong class="text-neutral-950 text-sm block truncate">{{ app.candidate.name }}</strong>
+                  <span class="text-neutral-500 text-xs">Candidatura #{{ app.id }}</span>
+                </div>
               </div>
-              <div class="flex items-center gap-3 shrink-0 ml-4">
+              <div class="hidden md:flex md:items-center md:gap-1 text-neutral-400 text-xs mt-0">
+                <ng-icon name="heroCalendarDays" size="14px" />
+                {{ app.appliedAt | date:'dd/MM/yyyy' }}
+              </div>
+              <div class="hidden md:flex md:justify-end">
                 <app-status-badge [status]="app.status" />
-                @if (app.status === 'PENDING' || app.status === 'IN_REVIEW') {
-                  <ng-icon name="heroChevronRightSolid" size="16px" class="text-neutral-300" />
-                } @else {
-                  <span class="text-neutral-400 text-xs">Finalizado</span>
-                }
+              </div>
+              <!-- Mobile: date + status below name -->
+              <div class="flex items-center justify-between mt-2 md:hidden">
+                <span class="text-neutral-400 text-xs flex items-center gap-1">
+                  <ng-icon name="heroCalendarDays" size="12px" />
+                  {{ app.appliedAt | date:'dd/MM/yyyy' }}
+                </span>
+                <app-status-badge [status]="app.status" />
               </div>
             </a>
           }
         </div>
       }
     }
-  }
+  </div>
 </div>

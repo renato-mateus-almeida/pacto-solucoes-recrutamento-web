@@ -1,13 +1,12 @@
 import { Component, inject, signal, computed, ChangeDetectionStrategy } from '@angular/core';
+import { toSignal, toObservable } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { toSignal } from '@angular/core/rxjs-interop';
 import { NgIcon } from '@ng-icons/core';
+import { switchMap, tap, catchError, of } from 'rxjs';
 import { VacancyService } from '../../../core/services/vacancy';
-import { VacancyResponse } from '../../../core/models/vacancy.model';
 import { ApplicationResponse, ApplicationStatus } from '../../../core/models/application.model';
 import { StatusBadge } from '../../../shared/components/status-badge/status-badge';
 import { DatePipe } from '@angular/common';
-import { catchError, of } from 'rxjs';
 
 @Component({
   selector: 'app-admin-application-list',
@@ -21,16 +20,27 @@ export class AdminApplicationList {
 
   readonly vacancyId = Number(inject(ActivatedRoute).snapshot.paramMap.get('vacancyId'));
 
+  protected readonly loading = signal(true);
+  protected readonly error = signal<string | null>(null);
+
+  private readonly reload = signal(0);
+
   readonly vacancy = toSignal(
-    this.vacancyService.getById(this.vacancyId).pipe(
-      catchError(() => of(null))
+    toObservable(this.reload).pipe(
+      tap(() => { this.loading.set(true); this.error.set(null); }),
+      switchMap(() => this.vacancyService.getById(this.vacancyId).pipe(
+        tap(() => this.loading.set(false)),
+        catchError(() => { this.error.set('Erro ao carregar dados da vaga'); this.loading.set(false); return of(null); })
+      ))
     ),
     { initialValue: null }
   );
 
   readonly applications = toSignal(
-    this.vacancyService.listApplications(this.vacancyId).pipe(
-      catchError(() => of([] as ApplicationResponse[]))
+    toObservable(this.reload).pipe(
+      switchMap(() => this.vacancyService.listApplications(this.vacancyId).pipe(
+        catchError(() => { this.error.set('Erro ao carregar candidaturas'); this.loading.set(false); return of([] as ApplicationResponse[]); })
+      ))
     ),
     { initialValue: [] as ApplicationResponse[] }
   );
@@ -57,5 +67,9 @@ export class AdminApplicationList {
 
   protected setFilter(status: ApplicationStatus | 'ALL'): void {
     this.activeFilter.set(status);
+  }
+
+  protected loadAll(): void {
+    this.reload.update(v => v + 1);
   }
 }

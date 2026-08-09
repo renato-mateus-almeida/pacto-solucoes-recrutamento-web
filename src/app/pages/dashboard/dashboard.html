@@ -1,75 +1,145 @@
-<div class="bg-white px-6 py-7">
-  <h2 class="text-neutral-950 text-xl font-bold mb-1">Meu Painel</h2>
-  <p class="text-neutral-500 text-sm mb-6">Acompanhe o status das suas candidaturas</p>
+<div class="min-h-[calc(100vh-56px)] bg-neutral-50 px-4 py-8 md:py-10">
+  <div class="max-w-5xl mx-auto">
 
-  @if (!data() && !error()) {
-    <div class="grid grid-cols-4 gap-3.5 mb-8">
-      @for (i of [1,2,3,4]; track i) {
-        <div class="border border-neutral-200 rounded-xl p-5 text-center animate-pulse">
-          <div class="h-8 bg-neutral-200 rounded w-8 mx-auto mb-1"></div>
-          <div class="h-3 bg-neutral-100 rounded w-16 mx-auto"></div>
-        </div>
-      }
-    </div>
-  } @else if (error()) {
-    <div class="text-center py-16">
-      <p class="text-neutral-500">{{ error() }}</p>
-    </div>
-  } @else if (data(); as d) {
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-3.5 mb-8">
-      <div class="border border-neutral-200 rounded-xl p-5 text-center">
-        <div class="text-3xl font-bold text-amber-700 mb-1">{{ d.pending }}</div>
-        <div class="text-amber-800 text-sm flex items-center justify-center gap-1">
-          <ng-icon name="heroClock" size="14px" />
-          Pendentes
-        </div>
+    <!-- Header -->
+    <div class="flex items-start justify-between mb-8 flex-wrap gap-3">
+      <div>
+        <h2 class="text-neutral-950 text-2xl font-bold mb-1">Meu Painel</h2>
+        <p class="text-neutral-500 text-sm">Acompanhe o status das suas candidaturas</p>
       </div>
-      <div class="border border-neutral-200 rounded-xl p-5 text-center">
-        <div class="text-3xl font-bold text-blue-700 mb-1">{{ d.inReview }}</div>
-        <div class="text-blue-800 text-sm flex items-center justify-center gap-1">
-          <ng-icon name="heroMagnifyingGlass" size="14px" />
-          Em Análise
-        </div>
-      </div>
-      <div class="border border-neutral-200 rounded-xl p-5 text-center">
-        <div class="text-3xl font-bold text-green-700 mb-1">{{ d.approved }}</div>
-        <div class="text-green-800 text-sm flex items-center justify-center gap-1">
-          <ng-icon name="heroCheckCircle" size="14px" />
-          Aprovadas
-        </div>
-      </div>
-      <div class="border border-neutral-200 rounded-xl p-5 text-center">
-        <div class="text-3xl font-bold text-red-600 mb-1">{{ d.rejected }}</div>
-        <div class="text-red-700 text-sm flex items-center justify-center gap-1">
-          <ng-icon name="heroXCircle" size="14px" />
-          Reprovadas
-        </div>
-      </div>
+      <a routerLink="/vacancies"
+        class="bg-[#2241c8] text-white font-semibold px-5 py-2.5 rounded-lg text-sm no-underline inline-flex items-center gap-1.5 hover:bg-[#2241c8]/90 transition shadow-sm">
+        <ng-icon name="heroMagnifyingGlass" size="16px" />
+        Ver Vagas Abertas
+      </a>
     </div>
 
-    @if (d.applications.length === 0) {
-      <div class="text-center py-12">
-        <ng-icon name="heroClipboardDocumentList" size="48px" class="text-neutral-300 mb-4 block mx-auto" />
-        <h4 class="text-neutral-950 font-bold mb-2">Nenhuma candidatura ainda</h4>
-        <p class="text-neutral-500 text-sm mb-5">Explore as vagas disponíveis e candidate-se!</p>
-        <a routerLink="/vacancies" class="bg-[#2241c8] text-white font-semibold px-6 py-2.5 rounded-lg text-sm no-underline inline-block">Ver Vagas Abertas</a>
-      </div>
-    } @else {
-      <h4 class="text-neutral-950 text-[15px] font-semibold mb-3">Todas as Candidaturas ({{ d.totalApplications }})</h4>
-      <div class="border border-neutral-200 rounded-xl overflow-hidden">
-        @for (app of d.applications; track app.id) {
-          <div class="flex items-center justify-between px-5 py-3.5 border-b border-neutral-100 last:border-b-0">
-            <div>
-              <strong class="text-neutral-950 text-sm">{{ app.vacancy.title }}</strong>
-              <div class="text-neutral-500 text-xs mt-0.5">Candidatura em {{ app.appliedAt | date:'dd/MM/yyyy' }}</div>
-            </div>
-            <div class="flex items-center gap-3">
-              <span class="text-neutral-300 text-xs">Feedback: {{ app.feedback ?? '—' }}</span>
-              <app-status-badge [status]="app.status"></app-status-badge>
-            </div>
-          </div>
-        }
+    <!-- Error -->
+    @if (error()) {
+      <div class="bg-white rounded-xl border border-neutral-200 shadow-sm text-center py-16">
+        <div class="text-4xl mb-4">
+          <ng-icon name="heroExclamationTriangle" size="48px" class="text-red-300" />
+        </div>
+        <h3 class="text-neutral-950 font-bold mb-2">Erro ao carregar</h3>
+        <p class="text-neutral-500 text-sm mb-5">{{ error() }}</p>
+        <button (click)="loadAll()"
+          class="bg-[#2241c8] text-white font-semibold px-6 py-2.5 rounded-lg text-sm cursor-pointer border-none hover:bg-[#2241c8]/90 transition shadow-sm">
+          Tentar novamente
+        </button>
       </div>
     }
-  }
+
+    <!-- Content -->
+    @if (!error()) {
+      <!-- Loading: Stats Cards -->
+      @if (loading()) {
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
+          @for (i of [1,2,3,4]; track i) {
+            <div class="bg-white rounded-xl border border-neutral-200 p-4 animate-pulse">
+              <div class="h-3 w-16 bg-neutral-200 rounded mb-3"></div>
+              <div class="h-8 w-10 bg-neutral-100 rounded"></div>
+            </div>
+          }
+        </div>
+      }
+
+      <!-- Stats Cards -->
+      @if (data(); as d) {
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
+          <!-- Pendentes -->
+          <div class="bg-white rounded-xl border border-amber-200 p-4">
+            <div class="flex items-center gap-1.5 text-amber-600 text-xs font-medium uppercase mb-1">
+              <ng-icon name="heroClock" size="14px" />
+              Pendentes
+            </div>
+            <p class="text-amber-700 text-2xl font-bold">{{ d.pending }}</p>
+          </div>
+
+          <!-- Em Análise -->
+          <div class="bg-white rounded-xl border border-blue-200 p-4">
+            <div class="flex items-center gap-1.5 text-blue-600 text-xs font-medium uppercase mb-1">
+              <ng-icon name="heroMagnifyingGlass" size="14px" />
+              Em Análise
+            </div>
+            <p class="text-blue-700 text-2xl font-bold">{{ d.inReview }}</p>
+          </div>
+
+          <!-- Aprovadas -->
+          <div class="bg-white rounded-xl border border-green-200 p-4">
+            <div class="flex items-center gap-1.5 text-green-600 text-xs font-medium uppercase mb-1">
+              <ng-icon name="heroCheckCircle" size="14px" />
+              Aprovadas
+            </div>
+            <p class="text-green-700 text-2xl font-bold">{{ d.approved }}</p>
+          </div>
+
+          <!-- Reprovadas -->
+          <div class="bg-white rounded-xl border border-red-200 p-4">
+            <div class="flex items-center gap-1.5 text-red-600 text-xs font-medium uppercase mb-1">
+              <ng-icon name="heroXCircle" size="14px" />
+              Reprovadas
+            </div>
+            <p class="text-red-700 text-2xl font-bold">{{ d.rejected }}</p>
+          </div>
+        </div>
+
+        <!-- Empty -->
+        @if (d.applications.length === 0) {
+          <div class="bg-white rounded-xl border border-neutral-200 shadow-sm text-center py-16">
+            <div class="text-4xl mb-4">
+              <ng-icon name="heroClipboardDocumentList" size="48px" class="text-neutral-300" />
+            </div>
+            <h3 class="text-neutral-950 font-bold mb-2">Nenhuma candidatura ainda</h3>
+            <p class="text-neutral-500 text-sm mb-5">Explore as vagas disponíveis e candidate-se!</p>
+            <a routerLink="/vacancies"
+              class="bg-[#2241c8] text-white font-semibold px-6 py-2.5 rounded-lg text-sm no-underline inline-block hover:bg-[#2241c8]/90 transition shadow-sm">
+              Ver Vagas Abertas
+            </a>
+          </div>
+        }
+
+        <!-- Table -->
+        @else {
+          <div class="bg-white rounded-xl border border-neutral-200 shadow-sm overflow-hidden">
+            <!-- Table Header -->
+            <div class="hidden md:grid grid-cols-[1fr_auto_auto] gap-4 px-5 py-3 bg-neutral-50 border-b border-neutral-200 text-neutral-500 text-xs font-semibold uppercase tracking-wider">
+              <span>Vaga</span>
+              <span>Data</span>
+              <span>Status</span>
+            </div>
+
+            <!-- Table Rows -->
+            @for (app of d.applications; track app.id) {
+              <div class="flex flex-col md:grid md:grid-cols-[1fr_auto_auto] md:gap-4 md:items-center px-5 py-4 border-b border-neutral-100 last:border-0 hover:bg-neutral-50 transition-colors">
+                <div class="min-w-0">
+                  <strong class="text-neutral-950 text-sm block truncate">{{ app.vacancy.title }}</strong>
+                  @if (app.feedback) {
+                    <span class="text-neutral-500 text-xs mt-0.5 block truncate">Feedback: {{ app.feedback }}</span>
+                  } @else {
+                    <span class="text-neutral-500 text-xs mt-0.5">Candidatura em {{ app.appliedAt | date:'dd/MM/yyyy' }}</span>
+                  }
+                </div>
+                <div class="hidden md:flex md:items-center md:gap-1 text-neutral-400 text-xs">
+                  <ng-icon name="heroCalendarDays" size="14px" />
+                  {{ app.appliedAt | date:'dd/MM/yyyy' }}
+                </div>
+                <div class="hidden md:flex md:justify-end">
+                  <app-status-badge [status]="app.status" />
+                </div>
+                <!-- Mobile: date + status below -->
+                <div class="flex items-center justify-between mt-2 md:hidden">
+                  <span class="text-neutral-400 text-xs flex items-center gap-1">
+                    <ng-icon name="heroCalendarDays" size="12px" />
+                    {{ app.appliedAt | date:'dd/MM/yyyy' }}
+                  </span>
+                  <app-status-badge [status]="app.status" />
+                </div>
+              </div>
+            }
+          </div>
+        }
+      }
+    }
+
+  </div>
 </div>

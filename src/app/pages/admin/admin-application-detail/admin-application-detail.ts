@@ -39,7 +39,6 @@ export class AdminApplicationDetail {
   protected readonly showApproveModal = signal(false);
   protected readonly showRejectModal = signal(false);
 
-  protected readonly selectedScore = signal(3);
   protected readonly evaluation = signal<EvaluationResponse | null>(null);
 
   protected readonly feedbackForm = this.fb.group({
@@ -100,10 +99,6 @@ export class AdminApplicationDetail {
     });
   }
 
-  protected setScore(score: number): void {
-    this.selectedScore.set(score);
-  }
-
   protected decide(status: 'APPROVED' | 'REJECTED'): void {
     const feedback = this.feedbackForm.controls.feedback.value || undefined;
     this.submitting.set(true);
@@ -113,7 +108,6 @@ export class AdminApplicationDetail {
     const applicationId = Number(this.route.snapshot.paramMap.get('id'));
 
     const evaluationData: EvaluationRequest = {
-      score: this.selectedScore(),
       ...(feedback && { feedback })
     };
 

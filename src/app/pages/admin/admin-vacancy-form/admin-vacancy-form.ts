@@ -4,7 +4,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { NgIcon } from '@ng-icons/core';
 import { VacancyService } from '../../../core/services/vacancy';
-import { VacancyStatus } from '../../../core/models/vacancy.model';
+import { VacancyResponse, VacancyStatus } from '../../../core/models/vacancy.model';
 import { ConfirmModal } from '../../../shared/components/confirm-modal/confirm-modal';
 import { HttpErrorResponse } from '@angular/common/http';
 
@@ -16,6 +16,11 @@ import { HttpErrorResponse } from '@angular/common/http';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AdminVacancyForm {
+  private static readonly STATUS = {
+    DRAFT: 'DRAFT' as const,
+    OPEN: 'OPEN' as const,
+  };
+
   private readonly fb = inject(FormBuilder).nonNullable;
   private readonly vacancyService = inject(VacancyService);
   private readonly route = inject(ActivatedRoute);
@@ -25,7 +30,7 @@ export class AdminVacancyForm {
   protected readonly form = this.fb.group({
     title: ['', Validators.required],
     description: [''],
-    status: ['OPEN' as VacancyStatus, Validators.required]
+    status: [AdminVacancyForm.STATUS.OPEN as VacancyStatus, Validators.required]
   });
 
   protected readonly requirements = signal<string[]>([]);
@@ -35,6 +40,8 @@ export class AdminVacancyForm {
   protected readonly isEditing = signal(false);
   protected readonly originalStatus = signal<VacancyStatus | null>(null);
   protected readonly showPublishModal = signal(false);
+  protected readonly loading = signal(false);
+
   private editingId: number | null = null;
 
   constructor() {
@@ -45,24 +52,15 @@ export class AdminVacancyForm {
     }
   }
 
-  readonly loading = signal(false);
-
   ngOnInit(): void {
-    const id = this.route.snapshot.paramMap.get('id');
-    if (id) {
-      this.loading.set(true);
-      this.vacancyService.getById(Number(id)).pipe(
-        takeUntilDestroyed(this.destroyRef)
-      ).subscribe({
-        next: (v) => {
-          this.form.patchValue({ title: v.title, description: v.description ?? '', status: v.status });
-          this.requirements.set(v.requirements.map(r => r.description));
-          this.originalStatus.set(v.status);
-          this.loading.set(false);
-        },
-        error: () => { this.error.set('Erro ao carregar vaga'); this.loading.set(false); }
-      });
-    }
+    if (!this.editingId) return;
+    this.loading.set(true);
+    this.vacancyService.getById(this.editingId).pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe({
+      next: (v) => this.patchFormWithVacancy(v),
+      error: () => this.handleLoadError()
+    });
   }
 
   protected addRequirement(): void {
@@ -82,44 +80,77 @@ export class AdminVacancyForm {
   }
 
   protected readonly isPublishedAsOpen = () =>
-    this.isEditing() && this.originalStatus() === 'OPEN';
+    this.isEditing() && this.originalStatus() === AdminVacancyForm.STATUS.OPEN;
 
   protected confirmPublish(): void {
-    if (this.form.invalid) { this.form.markAllAsTouched(); return; }
+    if (!this.validateForm()) return;
     this.showPublishModal.set(true);
   }
 
   protected publish(): void {
-    this.form.controls.status.setValue('OPEN');
+    this.form.controls.status.setValue(AdminVacancyForm.STATUS.OPEN);
     this.showPublishModal.set(false);
     this.doSubmit();
   }
 
   protected saveAsDraft(): void {
-    if (this.form.invalid) { this.form.markAllAsTouched(); return; }
-    this.form.controls.status.setValue('DRAFT');
+    if (!this.validateForm()) return;
+    this.form.controls.status.setValue(AdminVacancyForm.STATUS.DRAFT);
     this.doSubmit();
   }
 
   protected saveEdits(): void {
-    if (this.form.invalid) { this.form.markAllAsTouched(); return; }
+    if (!this.validateForm()) return;
     this.doSubmit();
   }
 
   private doSubmit(): void {
-    this.submitting.set(true);
-    this.error.set(null);
-    const data = { ...this.form.getRawValue(), requirements: this.requirements() };
-    const request$ = this.isEditing()
-      ? this.vacancyService.update(this.editingId!, data)
-      : this.vacancyService.create(data);
-
+    this.beginSubmit();
+    const data = this.buildVacancyData();
+    const request$ = this.buildRequest(data);
     request$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => this.router.navigate(['/admin/vacancies']),
-      error: (err: HttpErrorResponse) => {
-        this.submitting.set(false);
-        this.error.set(err.status === 400 ? 'Verifique os campos' : 'Erro ao salvar vaga');
-      }
+      error: (err: HttpErrorResponse) => this.handleSubmitError(err)
     });
+  }
+
+  private patchFormWithVacancy(v: VacancyResponse): void {
+    this.form.patchValue({ title: v.title, description: v.description ?? '', status: v.status });
+    this.requirements.set(v.requirements.map(r => r.description));
+    this.originalStatus.set(v.status);
+    this.loading.set(false);
+  }
+
+  private handleLoadError(): void {
+    this.error.set('Erro ao carregar vaga');
+    this.loading.set(false);
+  }
+
+  private validateForm(): boolean {
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return false;
+    }
+    return true;
+  }
+
+  private beginSubmit(): void {
+    this.submitting.set(true);
+    this.error.set(null);
+  }
+
+  private buildVacancyData() {
+    return { ...this.form.getRawValue(), requirements: this.requirements() };
+  }
+
+  private buildRequest(data: ReturnType<AdminVacancyForm['buildVacancyData']>) {
+    return this.isEditing()
+      ? this.vacancyService.update(this.editingId!, data)
+      : this.vacancyService.create(data);
+  }
+
+  private handleSubmitError(err: HttpErrorResponse): void {
+    this.submitting.set(false);
+    this.error.set(err.status === 400 ? 'Verifique os campos' : 'Erro ao salvar vaga');
   }
 }

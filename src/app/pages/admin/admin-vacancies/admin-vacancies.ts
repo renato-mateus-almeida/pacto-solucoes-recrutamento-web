@@ -3,9 +3,9 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { toSignal, toObservable } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { NgIcon } from '@ng-icons/core';
-import { switchMap, tap, catchError, of } from 'rxjs';
+import { switchMap, tap, catchError, of, Observable } from 'rxjs';
 import { VacancyService } from '../../../core/services/vacancy';
-import { VacancyStatus } from '../../../core/models/vacancy.model';
+import { VacancyResponse, VacancyStatus } from '../../../core/models/vacancy.model';
 import { StatusBadge } from '../../../shared/components/status-badge/status-badge';
 import { ConfirmModal } from '../../../shared/components/confirm-modal/confirm-modal';
 import { DatePipe } from '@angular/common';
@@ -19,6 +19,12 @@ import { FormsModule } from '@angular/forms';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AdminVacancies {
+  private static readonly STATUS = {
+    DRAFT: 'DRAFT' as const,
+    OPEN: 'OPEN' as const,
+    CLOSED: 'CLOSED' as const,
+  };
+
   private readonly vacancyService = inject(VacancyService);
   private readonly destroyRef = inject(DestroyRef);
 
@@ -32,12 +38,12 @@ export class AdminVacancies {
 
   readonly vacancies = toSignal(
     toObservable(this.filters).pipe(
-      tap(() => { this.loading.set(true); this.error.set(null); }),
+      tap(() => this.beginLoading()),
       switchMap(p => this.vacancyService.list(p)),
-      tap(() => this.loading.set(false)),
-      catchError(() => { this.error.set('Erro ao carregar vagas'); this.loading.set(false); return of([]); })
+      tap(() => this.finishLoading()),
+      catchError(() => this.handleVacanciesLoadError())
     ),
-    { initialValue: [] as any[] }
+    { initialValue: [] as VacancyResponse[] }
   );
 
   protected closingId = signal<number | null>(null);
@@ -46,10 +52,16 @@ export class AdminVacancies {
   protected deletingId = signal<number | null>(null);
   protected deleting = signal(false);
 
-  protected readonly totalCount = computed(() => this.vacancies().length);
-  protected readonly openCount = computed(() => this.vacancies().filter(v => v.status === 'OPEN').length);
-  protected readonly draftCount = computed(() => this.vacancies().filter(v => v.status === 'DRAFT').length);
-  protected readonly closedCount = computed(() => this.vacancies().filter(v => v.status === 'CLOSED').length);
+  protected readonly counts = computed(() => {
+    const vacancies = this.vacancies();
+    const { OPEN, DRAFT, CLOSED } = AdminVacancies.STATUS;
+    return {
+      total: vacancies.length,
+      open: vacancies.filter(v => v.status === OPEN).length,
+      draft: vacancies.filter(v => v.status === DRAFT).length,
+      closed: vacancies.filter(v => v.status === CLOSED).length,
+    };
+  });
 
   protected load(): void {
     const params: { status?: VacancyStatus; requirement?: string } = {};
@@ -64,21 +76,21 @@ export class AdminVacancies {
     const id = this.closingId();
     if (!id) return;
     this.closing.set(true);
-    this.vacancyService.updateStatus(id, 'CLOSED').pipe(
+    this.vacancyService.updateStatus(id, AdminVacancies.STATUS.CLOSED).pipe(
       takeUntilDestroyed(this.destroyRef)
     ).subscribe({
-      next: () => { this.closingId.set(null); this.closing.set(false); this.load(); },
-      error: () => { this.closingId.set(null); this.closing.set(false); }
+      next: () => this.onCloseSuccess(),
+      error: () => this.onCloseError()
     });
   }
 
   protected publish(id: number): void {
     this.publishingId.set(id);
-    this.vacancyService.updateStatus(id, 'OPEN').pipe(
+    this.vacancyService.updateStatus(id, AdminVacancies.STATUS.OPEN).pipe(
       takeUntilDestroyed(this.destroyRef)
     ).subscribe({
-      next: () => { this.publishingId.set(null); this.load(); },
-      error: () => { this.publishingId.set(null); }
+      next: () => this.onPublishSuccess(),
+      error: () => this.onPublishError()
     });
   }
 
@@ -91,8 +103,64 @@ export class AdminVacancies {
     this.vacancyService.delete(id).pipe(
       takeUntilDestroyed(this.destroyRef)
     ).subscribe({
-      next: () => { this.deletingId.set(null); this.deleting.set(false); this.load(); },
-      error: () => { this.deletingId.set(null); this.deleting.set(false); }
+      next: () => this.onDeleteSuccess(),
+      error: () => this.onDeleteError()
     });
+  }
+
+  private beginLoading(): void {
+    this.loading.set(true);
+    this.error.set(null);
+  }
+
+  private finishLoading(): void {
+    this.loading.set(false);
+  }
+
+  private handleVacanciesLoadError(): Observable<VacancyResponse[]> {
+    this.error.set('Erro ao carregar vagas');
+    this.loading.set(false);
+    return of([]);
+  }
+
+  private onCloseSuccess(): void {
+    this.resetClose();
+    this.load();
+  }
+
+  private onCloseError(): void {
+    this.resetClose();
+  }
+
+  private resetClose(): void {
+    this.closingId.set(null);
+    this.closing.set(false);
+  }
+
+  private onPublishSuccess(): void {
+    this.resetPublish();
+    this.load();
+  }
+
+  private onPublishError(): void {
+    this.resetPublish();
+  }
+
+  private resetPublish(): void {
+    this.publishingId.set(null);
+  }
+
+  private onDeleteSuccess(): void {
+    this.resetDelete();
+    this.load();
+  }
+
+  private onDeleteError(): void {
+    this.resetDelete();
+  }
+
+  private resetDelete(): void {
+    this.deletingId.set(null);
+    this.deleting.set(false);
   }
 }

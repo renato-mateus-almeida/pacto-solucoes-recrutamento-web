@@ -9,6 +9,17 @@
 
 Aplicação Angular para gestão de vagas e candidaturas. Interface web do sistema **Pacto Recrutamento** — um painel completo onde candidatos se inscrevem em vagas e administradores gerenciam o pipeline de seleção com avaliações e feedback.
 
+## 📋 Sobre o Projeto
+
+O **Pacto Recrutamento** resolve o problema de recrutamento interno em empresas: colaboradores podem descobrir e candidatar-se a vagas internas, enquanto gestores de RH conduzem o pipeline seletivo com avaliações e feedback — tudo centralizado em uma única plataforma.
+
+O sistema possui dois perfis de acesso:
+
+- **Candidato (USER)**: navega por vagas abertas, candidata-se com um clique e acompanha o status de cada candidatura em um dashboard pessoal.
+- **Administrador (ADMIN)**: gerencia vagas (CRUD com fluxo rascunho/publicação), revisa candidaturas, avalia candidatos e toma decisões de aprovação/reprovação.
+
+Notificações em tempo real via **Server-Sent Events (SSE)** mantêm os candidatos informados sobre mudanças de status em suas candidaturas.
+
 ---
 
 ## 🎯 Funcionalidades
@@ -36,7 +47,7 @@ Aplicação Angular para gestão de vagas e candidaturas. Interface web do siste
 - [x] Listagem de candidaturas por vaga com status e ações
 - [x] Detalhe da candidatura em layout de duas colunas (conteúdo principal + sidebar da vaga)
 - [x] Transição automática PENDING → IN_REVIEW ao abrir candidatura
-- [x] Avaliação do candidato com nota (1-5) e feedback textual
+- [x] Avaliação do candidato com feedback textual
 - [x] Fluxo encadeado: `POST /evaluation` → `PATCH /status` (aprovar/reprovar)
 - [x] Exibição da avaliação registrada após submissão
 
@@ -86,11 +97,51 @@ npm run build
 # artefatos em dist/recrutamento
 ```
 
+### Docker
+
+```bash
+docker compose up -d
+# Frontend em http://localhost:4200
+# API em http://localhost:8080
+```
+
+A stack Docker inclui:
+- Container **Angular** servido via Nginx com proxy reverso para a API
+- Fallback SPA configurado (`try_files $uri /index.html`) para rotas Angular
+
 ### Testes
 
 ```bash
 npm test
 ```
+
+---
+
+## 🔌 API Endpoints
+
+O frontend consome a API REST em `/api/v1`. Endpoints principais:
+
+| Método | Rota | Descrição | Role |
+|--------|------|-----------|------|
+| `POST` | `/auth/login` | Autenticação JWT | Público |
+| `POST` | `/auth/register` | Registro de usuário | Público |
+| `GET` | `/vacancies` | Listar vagas (filtro: `status`, `search`) | USER |
+| `GET` | `/vacancies/{id}` | Detalhe da vaga | USER |
+| `GET` | `/vacancies/{id}/applications` | Candidaturas de uma vaga | ADMIN |
+| `POST` | `/vacancies` | Criar vaga | ADMIN |
+| `PUT` | `/vacancies/{id}` | Editar vaga | ADMIN |
+| `PATCH` | `/vacancies/{id}/status` | Alterar status da vaga | ADMIN |
+| `DELETE` | `/vacancies/{id}` | Excluir vaga (rascunho) | ADMIN |
+| `POST` | `/applications` | Candidatar-se a uma vaga | USER |
+| `GET` | `/applications/me` | Minhas candidaturas | USER |
+| `PATCH` | `/applications/{id}/status` | Atualizar status da candidatura | ADMIN |
+| `POST` | `/applications/{id}/evaluation` | Criar avaliação | ADMIN |
+| `GET` | `/applications/{id}/evaluation` | Consultar avaliação | ADMIN |
+| `GET` | `/dashboard` | Painel do candidato | USER |
+| `GET` | `/notifications` | Listar notificações | USER/ADMIN |
+| `GET` | `/notifications/stream` | Stream SSE (notificações em tempo real) | USER/ADMIN |
+| `GET` | `/notifications/unread-count` | Contador de não lidas | USER/ADMIN |
+| `PATCH` | `/notifications/{id}/read` | Marcar como lida | USER/ADMIN |
 
 ---
 
@@ -149,8 +200,8 @@ src/
 
 | Repositório | Descrição |
 |-------------|-----------|
-| [pacto-solucoes-recrutamento-api](https://github.com/seu-user/pacto-solucoes-recrutamento-api) | API REST em Java/Spring Boot 3 |
-| [pacto-solucoes-recrutamento](https://github.com/seu-user/pacto-solucoes-recrutamento) | Repositório central com README geral e documentação |
+| `pacto-solucoes-recrutamento-api` | API REST em Java/Spring Boot 3 |
+| `pacto-solucoes-recrutamento` | Repositório central com documentação geral |
 
 ---
 

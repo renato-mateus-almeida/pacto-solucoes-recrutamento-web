@@ -2,7 +2,7 @@ import { Component, inject, signal, computed, ChangeDetectionStrategy } from '@a
 import { toSignal, toObservable } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { NgIcon } from '@ng-icons/core';
-import { switchMap, tap, catchError, of } from 'rxjs';
+import { switchMap, tap, catchError, of, Observable } from 'rxjs';
 import { VacancyService } from '../../../core/services/vacancy';
 import { ApplicationResponse, ApplicationStatus } from '../../../core/models/application.model';
 import { StatusBadge } from '../../../shared/components/status-badge/status-badge';
@@ -16,36 +16,45 @@ import { DatePipe } from '@angular/common';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AdminApplicationList {
-  private readonly vacancyService = inject(VacancyService);
+  private static readonly STATUS = {
+    PENDING: 'PENDING' as const,
+    IN_REVIEW: 'IN_REVIEW' as const,
+    APPROVED: 'APPROVED' as const,
+    REJECTED: 'REJECTED' as const,
+  };
 
-  readonly vacancyId = Number(inject(ActivatedRoute).snapshot.paramMap.get('vacancyId'));
+  private readonly route = inject(ActivatedRoute);
+  private readonly vacancyService = inject(VacancyService);
 
   protected readonly loading = signal(true);
   protected readonly error = signal<string | null>(null);
+  protected readonly activeFilter = signal<ApplicationStatus | 'ALL'>('ALL');
 
-  private readonly reload = signal(0);
+  private readonly refreshTrigger = signal(0);
+
+  protected get vacancyId(): number {
+    return Number(this.route.snapshot.paramMap.get('vacancyId'));
+  }
 
   readonly vacancy = toSignal(
-    toObservable(this.reload).pipe(
-      tap(() => { this.loading.set(true); this.error.set(null); }),
+    toObservable(this.refreshTrigger).pipe(
+      tap(() => this.beginLoading()),
       switchMap(() => this.vacancyService.getById(this.vacancyId).pipe(
-        tap(() => this.loading.set(false)),
-        catchError(() => { this.error.set('Erro ao carregar dados da vaga'); this.loading.set(false); return of(null); })
+        tap(() => this.finishLoading()),
+        catchError(() => this.handleVacancyLoadError())
       ))
     ),
     { initialValue: null }
   );
 
   readonly applications = toSignal(
-    toObservable(this.reload).pipe(
+    toObservable(this.refreshTrigger).pipe(
       switchMap(() => this.vacancyService.listApplications(this.vacancyId).pipe(
-        catchError(() => { this.error.set('Erro ao carregar candidaturas'); this.loading.set(false); return of([] as ApplicationResponse[]); })
+        catchError(() => this.handleApplicationsLoadError())
       ))
     ),
     { initialValue: [] as ApplicationResponse[] }
   );
-
-  protected readonly activeFilter = signal<ApplicationStatus | 'ALL'>('ALL');
 
   protected readonly filtered = computed(() => {
     const filter = this.activeFilter();
@@ -56,12 +65,13 @@ export class AdminApplicationList {
 
   protected readonly counts = computed(() => {
     const apps = this.applications();
+    const { PENDING, IN_REVIEW, APPROVED, REJECTED } = AdminApplicationList.STATUS;
     return {
       all: apps.length,
-      pending: apps.filter(a => a.status === 'PENDING').length,
-      inReview: apps.filter(a => a.status === 'IN_REVIEW').length,
-      approved: apps.filter(a => a.status === 'APPROVED').length,
-      rejected: apps.filter(a => a.status === 'REJECTED').length,
+      pending: apps.filter(a => a.status === PENDING).length,
+      inReview: apps.filter(a => a.status === IN_REVIEW).length,
+      approved: apps.filter(a => a.status === APPROVED).length,
+      rejected: apps.filter(a => a.status === REJECTED).length,
     };
   });
 
@@ -70,6 +80,27 @@ export class AdminApplicationList {
   }
 
   protected loadAll(): void {
-    this.reload.update(v => v + 1);
+    this.refreshTrigger.update(v => v + 1);
+  }
+
+  private beginLoading(): void {
+    this.loading.set(true);
+    this.error.set(null);
+  }
+
+  private finishLoading(): void {
+    this.loading.set(false);
+  }
+
+  private handleVacancyLoadError(): Observable<null> {
+    this.error.set('Erro ao carregar dados da vaga');
+    this.loading.set(false);
+    return of(null);
+  }
+
+  private handleApplicationsLoadError(): Observable<ApplicationResponse[]> {
+    this.error.set('Erro ao carregar candidaturas');
+    this.loading.set(false);
+    return of([]);
   }
 }

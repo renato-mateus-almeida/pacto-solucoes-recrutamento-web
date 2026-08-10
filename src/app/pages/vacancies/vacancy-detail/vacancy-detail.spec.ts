@@ -1,7 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideHttpClient } from '@angular/common/http';
-import { provideRouter } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
+import { of, scheduled, asyncScheduler } from 'rxjs';
 import { VacancyDetail } from './vacancy-detail';
+import { VacancyService } from '../../../core/services/vacancy';
+import { ApplicationService } from '../../../core/services/application';
+
+const asap = <T>(value: T) => scheduled(of(value), asyncScheduler);
 
 describe('VacancyDetail', () => {
   let component: VacancyDetail;
@@ -10,7 +14,20 @@ describe('VacancyDetail', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [VacancyDetail],
-      providers: [provideHttpClient(), provideRouter([])]
+      providers: [
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            snapshot: {
+              paramMap: {
+                get: (key: string) => key === 'id' ? '1' : null,
+              },
+            },
+          },
+        },
+        { provide: VacancyService, useValue: { getById: () => asap(null) } },
+        { provide: ApplicationService, useValue: { listMy: () => asap([]) } },
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(VacancyDetail);

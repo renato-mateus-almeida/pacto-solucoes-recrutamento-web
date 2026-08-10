@@ -12,7 +12,7 @@ import { VacancyResponse } from '../../../core/models/vacancy.model';
 import { StatusBadge } from '../../../shared/components/status-badge/status-badge';
 import { ConfirmModal } from '../../../shared/components/confirm-modal/confirm-modal';
 import { DatePipe } from '@angular/common';
-import { switchMap, map, of, catchError, concatMap } from 'rxjs';
+import { switchMap, map, of, catchError, concatMap, tap, Observable } from 'rxjs';
 
 @Component({
   selector: 'app-admin-application-detail',
@@ -48,88 +48,17 @@ export class AdminApplicationDetail {
   protected vacancyId!: number;
 
   constructor() {
-    const vacancyId = Number(this.route.snapshot.paramMap.get('vacancyId'));
-    const applicationId = Number(this.route.snapshot.paramMap.get('id'));
+    const vacancyId = this.getVacancyId();
+    const applicationId = this.getApplicationId();
     this.vacancyId = vacancyId;
-
-    this.vacancyService.getById(vacancyId).pipe(
-      switchMap(v => {
-        this.vacancy.set(v);
-        return this.vacancyService.listApplications(vacancyId);
-      }),
-      map(apps => apps.find(a => a.id === applicationId)),
-      switchMap(app => {
-        if (!app) {
-          this.error.set('Candidatura não encontrada');
-          return of(null);
-        }
-        this.application.set(app);
-        if (app.status === 'PENDING') {
-          return this.applicationService.updateStatus(applicationId, 'IN_REVIEW');
-        }
-        return of(app);
-      }),
-      catchError(() => {
-        this.error.set('Vaga não encontrada');
-        return of(null);
-      }),
-      takeUntilDestroyed(this.destroyRef)
-    ).subscribe({
-      next: (result) => {
-        if (result) this.application.set(result);
-        this.loading.set(false);
-        this.cdr.detectChanges();
-
-        if (result && (result.status === 'APPROVED' || result.status === 'REJECTED')) {
-          this.evaluationService.getByApplication(applicationId).pipe(
-            takeUntilDestroyed(this.destroyRef)
-          ).subscribe({
-            next: (evaluation) => {
-              this.evaluation.set(evaluation);
-              this.cdr.detectChanges();
-            },
-            error: () => {}
-          });
-        }
-      },
-      error: () => {
-        this.loading.set(false);
-        this.cdr.detectChanges();
-      }
-    });
+    this.loadApplication(vacancyId, applicationId);
   }
 
   protected decide(status: 'APPROVED' | 'REJECTED'): void {
-    const feedback = this.feedbackForm.controls.feedback.value || undefined;
-    this.submitting.set(true);
-    this.showApproveModal.set(false);
-    this.showRejectModal.set(false);
-
-    const applicationId = Number(this.route.snapshot.paramMap.get('id'));
-
-    const evaluationData: EvaluationRequest = {
-      ...(feedback && { feedback })
-    };
-
-    this.evaluationService.create(applicationId, evaluationData).pipe(
-      takeUntilDestroyed(this.destroyRef),
-      concatMap(evaluation => {
-        this.evaluation.set(evaluation);
-        this.cdr.detectChanges();
-        return this.applicationService.updateStatus(applicationId, status);
-      })
-    ).subscribe({
-      next: (updated) => {
-        this.application.set(updated);
-        this.submitting.set(false);
-        this.cdr.detectChanges();
-      },
-      error: () => {
-        this.submitting.set(false);
-        this.error.set('Erro ao salvar avaliação');
-        this.cdr.detectChanges();
-      }
-    });
+    const feedback = this.getFeedbackValue();
+    this.beginDeciding();
+    const data = this.buildEvaluationData(feedback);
+    this.saveEvaluationAndUpdateStatus(this.getApplicationId(), data, status);
   }
 
   protected readonly canReview = () => {
@@ -141,4 +70,121 @@ export class AdminApplicationDetail {
     const status = this.application()?.status;
     return status === 'APPROVED' || status === 'REJECTED';
   };
+
+  private getVacancyId(): number {
+    return Number(this.route.snapshot.paramMap.get('vacancyId'));
+  }
+
+  private getApplicationId(): number {
+    return Number(this.route.snapshot.paramMap.get('id'));
+  }
+
+  private loadApplication(vacancyId: number, appId: number): void {
+    this.vacancyService.getById(vacancyId).pipe(
+      tap(v => this.vacancy.set(v)),
+      switchMap(() => this.vacancyService.listApplications(vacancyId)),
+      map(apps => this.findApplicationInList(apps, appId)),
+      switchMap(app => this.handleApplicationFound(app, appId)),
+      catchError(() => this.handleVacancyError()),
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe({
+      next: (app) => this.processLoadedData(app, appId),
+      error: () => this.finishLoading()
+    });
+  }
+
+  private findApplicationInList(apps: ApplicationResponse[], id: number): ApplicationResponse | undefined {
+    return apps.find(a => a.id === id);
+  }
+
+  private handleApplicationFound(app: ApplicationResponse | undefined, appId: number): Observable<ApplicationResponse | null> {
+    if (!app) return this.handleNotFoundError();
+    this.application.set(app);
+    return this.markAsInReviewIfPending(app, appId);
+  }
+
+  private handleNotFoundError(): Observable<null> {
+    this.error.set('Candidatura não encontrada');
+    return of(null);
+  }
+
+  private markAsInReviewIfPending(app: ApplicationResponse, appId: number): Observable<ApplicationResponse> {
+    if (app.status === 'PENDING') {
+      return this.applicationService.updateStatus(appId, 'IN_REVIEW');
+    }
+    return of(app);
+  }
+
+  private handleVacancyError(): Observable<null> {
+    this.error.set('Vaga não encontrada');
+    return of(null);
+  }
+
+  private processLoadedData(app: ApplicationResponse | null, appId: number): void {
+    if (app) this.application.set(app);
+    this.finishLoading();
+    if (this.isTerminalApp(app)) {
+      this.loadEvaluation(appId);
+    }
+  }
+
+  private isTerminalApp(app: ApplicationResponse | null): boolean {
+    return !!app && (app.status === 'APPROVED' || app.status === 'REJECTED');
+  }
+
+  private loadEvaluation(appId: number): void {
+    this.evaluationService.getByApplication(appId).pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe({
+      next: (e) => this.setEvaluation(e),
+      error: () => {}
+    });
+  }
+
+  private finishLoading(): void {
+    this.loading.set(false);
+    this.cdr.detectChanges();
+  }
+
+  private getFeedbackValue(): string | undefined {
+    return this.feedbackForm.controls.feedback.value || undefined;
+  }
+
+  private beginDeciding(): void {
+    this.submitting.set(true);
+    this.showApproveModal.set(false);
+    this.showRejectModal.set(false);
+  }
+
+  private buildEvaluationData(feedback?: string): EvaluationRequest {
+    return feedback ? { feedback } : {};
+  }
+
+  private saveEvaluationAndUpdateStatus(appId: number, data: EvaluationRequest, status: 'APPROVED' | 'REJECTED'): void {
+    this.evaluationService.create(appId, data).pipe(
+      takeUntilDestroyed(this.destroyRef),
+      tap(e => this.setEvaluation(e)),
+      concatMap(() => this.applicationService.updateStatus(appId, status))
+    ).subscribe({
+      next: (updated) => this.onStatusUpdated(updated),
+      error: () => this.onDecideError()
+    });
+  }
+
+  private setEvaluation(evaluation: EvaluationResponse): void {
+    this.evaluation.set(evaluation);
+    this.cdr.detectChanges();
+  }
+
+  private onStatusUpdated(updated: ApplicationResponse): void {
+    this.application.set(updated);
+    this.submitting.set(false);
+    this.cdr.detectChanges();
+  }
+
+  private onDecideError(): void {
+    this.submitting.set(false);
+    this.error.set('Erro ao salvar avaliação');
+    this.cdr.detectChanges();
+  }
 }

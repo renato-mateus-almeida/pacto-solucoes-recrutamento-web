@@ -27,32 +27,51 @@ export class Login {
   protected readonly credentialsError = signal(false);
 
   protected submit(): void {
+    if (!this.validateForm()) return;
+    this.beginSubmit();
+    this.authService.login(this.form.getRawValue()).subscribe({
+      next: (res) => this.onLoginSuccess(res),
+      error: (err: HttpErrorResponse) => this.handleLoginError(err)
+    });
+  }
+
+  private validateForm(): boolean {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
-      return;
+      return false;
     }
+    return true;
+  }
+
+  private beginSubmit(): void {
     this.loading.set(true);
     this.error.set(null);
     this.credentialsError.set(false);
-    this.authService.login(this.form.getRawValue()).subscribe({
-      next: (res) => {
-        const target = res.role === 'ADMIN' ? '/admin/vacancies' : '/dashboard';
-        this.router.navigate([target]);
-      },
-      error: (err: HttpErrorResponse) => {
-        this.loading.set(false);
-        if (err.status === 401) {
-          this.credentialsError.set(true);
-          this.error.set('Email ou senha inválidos');
-          this.form.controls.password.reset();
-          this.form.controls.email.markAsDirty();
-          this.form.controls.password.markAsDirty();
-        } else if (err.status === 400 && (err.error as ApiError)?.fields) {
-          this.error.set('Verifique os campos abaixo');
-        } else {
-          this.error.set('Erro inesperado. Tente novamente.');
-        }
-      }
-    });
+  }
+
+  private onLoginSuccess(res: { role: string }): void {
+    this.router.navigate([this.getTargetRoute(res.role)]);
+  }
+
+  private getTargetRoute(role: string): string {
+    return role === 'ADMIN' ? '/admin/vacancies' : '/dashboard';
+  }
+
+  private handleLoginError(err: HttpErrorResponse): void {
+    this.loading.set(false);
+    if (err.status === 401) return this.handleUnauthorized();
+    if (err.status === 400 && (err.error as ApiError)?.fields) {
+      this.error.set('Verifique os campos abaixo');
+      return;
+    }
+    this.error.set('Erro inesperado. Tente novamente.');
+  }
+
+  private handleUnauthorized(): void {
+    this.credentialsError.set(true);
+    this.error.set('Email ou senha inválidos');
+    this.form.controls.password.reset();
+    this.form.controls.email.markAsDirty();
+    this.form.controls.password.markAsDirty();
   }
 }
